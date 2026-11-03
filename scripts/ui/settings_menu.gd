@@ -17,7 +17,6 @@ var _scroll: ScrollContainer
 var _bind_buttons := {}
 var _reset: Button
 var _back: Button
-var _desc: Label
 var calibrate: Callable   ## set by the owner: opens the brightness screen
 
 
@@ -76,6 +75,7 @@ func _ready() -> void:
 	_slider(a, "Music", "audio", "music", 0.0, 1.0, 0.05, true)
 	_slider(a, "Sound effects", "audio", "sfx", 0.0, 1.0, 0.05, true)
 	_slider(a, "Ambience", "audio", "ambience", 0.0, 1.0, 0.05, true)
+	_cycle(a, "Heartbeat when the Keeper is near", "audio", "heartbeat", ["Off", "On"], [false, true])
 	_note(a, "Tapes and voices play on the sound-effects channel. Subtitles are under Accessibility.")
 
 	var c := _pages[1]
@@ -87,7 +87,7 @@ func _ready() -> void:
 	_section(c, "Movement")
 	_cycle(c, "Sprint", "controls", "sprint_mode", ["Hold", "Toggle"], [0, 1])
 	_cycle(c, "Crouch", "controls", "crouch_mode", ["Hold", "Toggle"], [0, 1])
-	_cycle(c, "Controller vibration", "controls", "vibration", ["Off", "On"], [false, true])
+	_cycle(c, "Vibration (phone and controller)", "controls", "vibration", ["Off", "On"], [false, true])
 	_section(c, "Key bindings")
 	var colh := HBoxContainer.new()
 	colh.add_child(UIKit.expand())
@@ -109,9 +109,10 @@ func _ready() -> void:
 
 	var g := _pages[2]
 	_section(g, "Display")
-	_cycle(g, "Display mode", "video", "fullscreen", ["Windowed", "Fullscreen"], [false, true])
+	if not Quality.is_phone_platform():   # a phone is always full screen
+		_cycle(g, "Display mode", "video", "fullscreen", ["Windowed", "Fullscreen"], [false, true])
 	_cycle(g, "V-Sync", "video", "vsync", ["Off", "On"], [false, true])
-	_cycle(g, "Quality", "video", "quality", Settings.QUALITY_NAMES, [0, 1, 2])
+	_cycle(g, "Quality", "video", "quality", Settings.QUALITY_NAMES, [0, 1, 2, 3])
 	_slider(g, "Resolution scale", "video", "resolution_scale", 0.5, 1.0, 0.05, true)
 	_slider(g, "Field of view", "video", "fov", 55.0, 95.0, 1.0, false)
 	_section(g, "Image")
@@ -135,7 +136,6 @@ func _ready() -> void:
 	_cycle(x, "Objective fades out", "access", "objective_fade", ["Off", "On"], [false, true])
 	_note(x, "Colour-blind-safe prompts draw every button prompt in plain black and white and mark warnings with a symbol, not only a colour.")
 
-	_desc = UIKit.label("", 19, UIKit.DIM, "ui")
 	v.add_child(UIKit.rule())
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 14)
@@ -376,11 +376,16 @@ func _capture(e: InputEvent) -> void:
 	if e is InputEventJoypadButton and e.button_index == JOY_BUTTON_START:
 		_stop_listen(false)
 		return
+	if e is InputEventMouseButton and (e.device == InputEvent.DEVICE_ID_EMULATION or Quality.is_phone_platform()):
+		# a finger tap posing as a left click: binding it would make every tap on the screen fire
+		# that action. Cancel instead, so a phone player is never stuck listening.
+		_stop_listen(false)
+		return
 	var slot: String = listening["slot"]
 	var is_pad := e is InputEventJoypadButton
 	if is_pad != (slot == "pad"):
 		return
-	if e is InputEventMouseButton and e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+	if e is InputEventMouseButton and e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
 		return
 	var ev: InputEvent = e
 	if e is InputEventKey:

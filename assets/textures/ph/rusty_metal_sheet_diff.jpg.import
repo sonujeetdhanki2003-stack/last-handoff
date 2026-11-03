@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://do46jsmnhg5dy"
 path.s3tc="res://.godot/imported/rusty_metal_sheet_diff.jpg-e8842094b278340ed3f864a1e0fcaeae.s3tc.ctex"
+path.etc2="res://.godot/imported/rusty_metal_sheet_diff.jpg-e8842094b278340ed3f864a1e0fcaeae.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/rusty_metal_sheet_diff.jpg"
-dest_files=["res://.godot/imported/rusty_metal_sheet_diff.jpg-e8842094b278340ed3f864a1e0fcaeae.s3tc.ctex"]
+dest_files=["res://.godot/imported/rusty_metal_sheet_diff.jpg-e8842094b278340ed3f864a1e0fcaeae.s3tc.ctex", "res://.godot/imported/rusty_metal_sheet_diff.jpg-e8842094b278340ed3f864a1e0fcaeae.etc2.ctex"]
 
 [params]
 

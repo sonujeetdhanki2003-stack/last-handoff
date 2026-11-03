@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://btp74xkanoepw"
 path.s3tc="res://.godot/imported/rusty_metal_sheet_nor.jpg-814dff499ea4b39e3e6879c95bcf0c98.s3tc.ctex"
+path.etc2="res://.godot/imported/rusty_metal_sheet_nor.jpg-814dff499ea4b39e3e6879c95bcf0c98.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/rusty_metal_sheet_nor.jpg"
-dest_files=["res://.godot/imported/rusty_metal_sheet_nor.jpg-814dff499ea4b39e3e6879c95bcf0c98.s3tc.ctex"]
+dest_files=["res://.godot/imported/rusty_metal_sheet_nor.jpg-814dff499ea4b39e3e6879c95bcf0c98.s3tc.ctex", "res://.godot/imported/rusty_metal_sheet_nor.jpg-814dff499ea4b39e3e6879c95bcf0c98.etc2.ctex"]
 
 [params]
 

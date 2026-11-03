@@ -9,7 +9,7 @@ func run() -> void:
 	while not v.exhausted and secs < 10.0:
 		v.step(0.1, true)
 		secs += 0.1
-	t.near(secs, 5.0, 0.25, "full stamina = about 5 s of sprinting")
+	t.near(secs, 1.0 / Vitals.SPRINT_DRAIN, 0.25, "full stamina = about %.1f s of sprinting" % (1.0 / Vitals.SPRINT_DRAIN))
 	t.check(not v.can_sprint(), "winded: no sprint")
 	v.step(0.5, false)
 	t.check(v.stamina == 0.0, "no regen during the short pause after sprinting")
@@ -63,8 +63,8 @@ func run() -> void:
 	await t.physics(60)
 	t.check(p.running, "sprinting")
 	t.check(noises.any(func(n): return n[1] == "run" and n[0] == Player.NOISE_RUN), "running footsteps are heard at %.0f m" % Player.NOISE_RUN)
-	await t.physics(300)
-	t.check(p.vitals.exhausted, "after ~5 s the player is winded")
+	await t.physics(int(60.0 / Vitals.SPRINT_DRAIN) - 60 + 20)
+	t.check(p.vitals.exhausted, "after ~%.1f s the player is winded" % (1.0 / Vitals.SPRINT_DRAIN))
 	t.check(not p.running, "winded: sprint key no longer runs")
 	t.check(noises.any(func(n): return n[1] == "winded"), "running out of breath makes a gasp the Keeper can hear")
 	Input.action_release("sprint")

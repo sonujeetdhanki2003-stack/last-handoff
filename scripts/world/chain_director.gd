@@ -93,7 +93,8 @@ static func _note_body(exp_n: int, who: String, msg: String, custom: String) -> 
 	if msg != "":
 		t += msg + "\n\n"
 	if custom != "":
-		t += "[i]" + custom + "[/i]\n\n"
+		# the player's own words: shown literally, never parsed as BBCode ("[/i]", "[img]..." etc.)
+		t += "[i]" + custom.replace("[", "[lb]") + "[/i]\n\n"
 	if t == "":
 		t = "[i](No message. Just the item.)[/i]\n\n"
 	return t + "- %s, Expedition %d" % [who, exp_n]

@@ -69,12 +69,17 @@ const WORLD := {
 	"keeper_lunge": [["res://audio/keeper/keeper_lunge.ogg"], 0.0, 6.0],
 	"keeper_crawl": [["res://audio/keeper/keeper_crawl.ogg"], 0.0, 7.0],
 	"keeper_drag": [["res://audio/keeper/keeper_drag.ogg"], -2.0, 5.0],
+	"vent_creak": [["res://audio/sfx/vent_creak.wav"], -4.0, 6.0],
+	"distant_thud": [["res://audio/ambience/bang0.wav", "res://audio/ambience/bang1.wav"], -2.0, 8.0],
+	"distant_steps": [["res://audio/foley/step_metal_1.ogg", "res://audio/foley/step_metal_2.ogg", "res://audio/foley/step_metal_3.ogg"], -6.0, 5.0],
 	"cloth": [["res://audio/foley/cloth_1.ogg", "res://audio/foley/cloth_2.ogg", "res://audio/foley/cloth_3.ogg"], -16.0, 2.0],
 }
 
 ## Captions for sounds that matter for play (Settings > Accessibility > Sound captions).
 const CAPTIONS := {
 	"door_heavy": "heavy door grinding", "door_locked": "locked door rattles",
+	"locker_rattle": "a locker rattles", "vent_creak": "metal creaking in the vents",
+	"distant_thud": "a distant thud", "distant_steps": "footsteps, far off",
 	"vent_bang": "metal banging in the vents", "keeper_alert": "a shriek - it has seen you",
 	"keeper_scream": "something screams", "keeper_hurt": "it recoils from the light, screeching",
 	"keeper_click": "wet clicking nearby", "keeper_sniff": "sniffing, close",

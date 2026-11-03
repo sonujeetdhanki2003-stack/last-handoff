@@ -1,482 +1,482 @@
 {
-"tape_okafor": {
-"speaker": "Rafe Okafor",
-"lines": [
-[
-0.0,
-3.94,
-"Security log, fourteenth of March. Okafor."
-],
-[
-4.42,
-6.28,
-"The lift is down to one cage."
-],
-[
-6.42,
-9.82,
-"One at a time, one person per trip, that's the order."
-],
-[
-10.2,
-15.22,
-"Doctor Varga wants Lab 3 sealed and the generator kept cold, so nobody touches the crank."
-],
-[
-15.8,
-19.02,
-"I've rotated the lab code again. I know. I know."
-],
-[
-19.18,
-21.06,
-"Just read the memo and burn it."
-],
-[
-21.26,
-21.98,
-"Leave everything."
-],
-[
-22.24,
-24.24,
-"Bags, samples, all of it."
-],
-[
-24.34,
-28.16,
-"If it's not in your hands when the cage comes, it stays down here."
-],
-[
-28.9,
-32.14,
-"Whatever's in that lab, it hears the power come on."
-],
-[
-32.16,
-33.86,
-"So we go up in the dark."
-]
-]
-},
-"tape_brandt": {
-"speaker": "Joel Brandt",
-"lines": [
-[
-0.0,
-1.7,
-"Gen-two maintenance, Brandt."
-],
-[
-1.4,
-4.14,
-"Note for whoever pulls the next shift."
-],
-[
-3.84,
-6.3,
-"Hold the crank until she catches."
-],
-[
-6.0,
-7.88,
-"About four seconds."
-],
-[
-7.58,
-10.4,
-"Don't let go early, she floods."
-],
-[
-10.1,
-13.06,
-"Corridor breaker is on the west wall."
-],
-[
-12.76,
-19.38,
-"If the corridor lights stutter, it's not the fuses, it's the breaker, so check that first."
-],
-[
-19.08,
-23.42,
-"And the fan in here has been spinning on its own when the power's off."
-],
-[
-23.12,
-26.4,
-"Which it shouldn't. I logged it."
-],
-[
-26.1,
-27.76,
-"Nobody answered."
-]
-]
-},
-"tape_varga1": {
-"speaker": "Dr. Ilse Varga",
-"lines": [
-[
-0.0,
-3.32,
-"Lab 3, day forty. Varga."
-],
-[
-4.08,
-6.4,
-"Specimen H-7 reacts to current."
-],
-[
-7.02,
-12.14,
-"Every time the generator runs, the readings climb, and the tank fluid turns toward the door."
-],
-[
-12.56,
-14.38,
-"Toward whoever is standing in it."
-],
-[
-14.74,
-17.2,
-"I've started to think the tank isn't where it is."
-],
-[
-17.68,
-19.8,
-"The tank is just where it listens from."
-],
-[
-20.24,
-21.92,
-"Everything is on the research drive."
-],
-[
-22.52,
-25.92,
-"If we lose the station, the drive is the only thing that matters."
-]
-]
-},
-"tape_varga2": {
-"speaker": "Dr. Ilse Varga",
-"lines": [
-[
-0.0,
-1.76,
-"If anyone finds this."
-],
-[
-2.06,
-3.62,
-"We thought we were studying it."
-],
-[
-3.32,
-5.0,
-"It was keeping count."
-],
-[
-5.36,
-6.86,
-"Every one of us who came down."
-],
-[
-7.08,
-8.52,
-"Every light we turned on."
-],
-[
-8.94,
-10.2,
-"It remembers all of it."
-],
-[
-10.54,
-12.2,
-"There are only three ways out of this."
-],
-[
-11.9,
-15.26,
-"Seal the station and let it starve in the dark."
-],
-[
-15.94,
-17.86,
-"Send the data up and let everyone know."
-],
-[
-17.98,
-19.1,
-"Or someone stays."
-],
-[
-19.58,
-21.82,
-"Someone keeps the lights off and keeps it company."
-],
-[
-22.52,
-23.5,
-"I couldn't choose."
-],
-[
-23.78,
-25.1,
-"Maybe the next one will."
-]
-]
-},
-"tape_mara": {
-"speaker": "Mara",
-"lines": [
-[
-0.0,
-3.68,
-"Expedition zero, day two. It's Mara."
-],
-[
-3.96,
-6.4,
-"They told us we were the first relay. We're not."
-],
-[
-6.74,
-10.18,
-"There's chalk on the walls down here that's older than us. Tally marks."
-],
-[
-10.34,
-11.68,
-"Someone's sleeping bag."
-],
-[
-11.84,
-14.78,
-"I'm leaving the keycard and a spare cell in the crate by the lift."
-],
-[
-14.96,
-16.82,
-"Whoever comes next, ration the light."
-],
-[
-16.52,
-18.62,
-"It listens when the power is on."
-],
-[
-18.32,
-20.36,
-"Leave something for the next one."
-],
-[
-20.06,
-22.64,
-"That's the only rule that works down here."
-]
-]
-},
-"tape_mara2": {
-"speaker": "Mara",
-"lines": [
-[
-0.0,
-3.08,
-"Expedition zero, day four. Mara."
-],
-[
-3.92,
-5.44,
-"There's a crawlspace behind the generator."
-],
-[
-5.14,
-6.82,
-"I pried the grate."
-],
-[
-6.52,
-9.28,
-"There's a camp at the end of it, and it isn't ours."
-],
-[
-8.98,
-11.84,
-"Their crates are full. Notes. Batteries. Names."
-],
-[
-11.94,
-16.72,
-"The tally on that wall goes back further than the station."
-],
-[
-16.42,
-18.66,
-"Halden wasn't built down here."
-],
-[
-18.36,
-20.38,
-"It was built on top of something."
-],
-[
-20.08,
-22.58,
-"I'm going to count them."
-]
-]
-},
-"tape_mara3": {
-"speaker": "Mara",
-"lines": [
-[
-0.0,
-1.3,
-"Day six."
-],
-[
-1.96,
-3.62,
-"I got into the records room."
-],
-[
-3.72,
-4.88,
-"The relay isn't new."
-],
-[
-5.12,
-7.76,
-"Every few years someone up top opens it again."
-],
-[
-8.08,
-10.78,
-"One name on the roster at a time, one per cage."
-],
-[
-11.34,
-13.64,
-"And every time, the count goes up by one."
-],
-[
-14.52,
-17.58,
-"Varga's sheet says it counted seven peaks when they were six."
-],
-[
-18.38,
-20.3,
-"I think I know who the seventh is."
-],
-[
-20.52,
-22.08,
-"It's whoever comes down next."
-]
-]
-},
-"tape_mara4": {
-"speaker": "Mara",
-"lines": [
-[
-0.0,
-1.32,
-"Last tape."
-],
-[
-1.78,
-3.12,
-"I understand it now."
-],
-[
-3.32,
-5.96,
-"It doesn't want the drive, and it doesn't want the power."
-],
-[
-6.02,
-7.32,
-"It wants the next one."
-],
-[
-7.58,
-14.18,
-"Every crate we stock, every note, every mark on the wall, is a promise that somebody else is coming down."
-],
-[
-14.58,
-16.4,
-"That's what it eats. The count."
-],
-[
-17.7,
-19.56,
-"So this is my real handoff."
-],
-[
-19.78,
-20.56,
-"Don't leave one."
-],
-[
-20.76,
-25.24,
-"Leave the crate empty, ride up with nothing in your hands, and don't let them send anyone after you."
-],
-[
-25.46,
-27.88,
-"Break the chain. I couldn't."
-],
-[
-27.94,
-30.56,
-"I left the keycard anyway. I'm sorry."
-]
-]
-},
-"tape_relay": {
-"speaker": "Unknown",
-"lines": [
-[
-0.0,
-2.6,
-"Relay two. Member four."
-],
-[
-3.24,
-4.84,
-"The lift only takes one."
-],
-[
-5.16,
-7.58,
-"If you're hearing this, I didn't go back up."
-],
-[
-7.92,
-12.36,
-"My crate is the one by the west wall. It's empty. I'm sorry."
-],
-[
-12.76,
-13.84,
-"I used everything."
-],
-[
-14.46,
-17.02,
-"Count the marks on the wall. Add yours."
-],
-[
-17.7,
-18.64,
-"Then keep going."
-]
-]
-}
+ "tape_okafor": {
+  "speaker": "Rafe Okafor",
+  "lines": [
+   [
+    0.0,
+    3.94,
+    "Security log, fourteenth of March. Okafor."
+   ],
+   [
+    4.42,
+    6.28,
+    "The lift is down to one cage."
+   ],
+   [
+    6.42,
+    9.82,
+    "One at a time, one person per trip, that's the order."
+   ],
+   [
+    10.2,
+    15.22,
+    "Doctor Varga wants Lab 3 sealed and the generator kept cold, so nobody touches the crank."
+   ],
+   [
+    15.8,
+    19.02,
+    "I've rotated the lab code again. I know. I know."
+   ],
+   [
+    19.18,
+    21.06,
+    "Just read the memo and burn it."
+   ],
+   [
+    21.26,
+    21.98,
+    "Leave everything."
+   ],
+   [
+    22.24,
+    24.24,
+    "Bags, samples, all of it."
+   ],
+   [
+    24.34,
+    28.16,
+    "If it's not in your hands when the cage comes, it stays down here."
+   ],
+   [
+    28.9,
+    32.14,
+    "Whatever's in that lab, it hears the power come on."
+   ],
+   [
+    32.16,
+    33.86,
+    "So we go up in the dark."
+   ]
+  ]
+ },
+ "tape_brandt": {
+  "speaker": "Joel Brandt",
+  "lines": [
+   [
+    0.0,
+    1.38,
+    "Gen-two maintenance, Brandt."
+   ],
+   [
+    1.4,
+    3.82,
+    "Note for whoever pulls the next shift."
+   ],
+   [
+    3.84,
+    5.98,
+    "Hold the crank until she catches."
+   ],
+   [
+    6.0,
+    7.56,
+    "About four seconds."
+   ],
+   [
+    7.58,
+    10.08,
+    "Don't let go early, she floods."
+   ],
+   [
+    10.1,
+    12.74,
+    "Corridor breaker is on the west wall."
+   ],
+   [
+    12.76,
+    19.06,
+    "If the corridor lights stutter, it's not the fuses, it's the breaker, so check that first."
+   ],
+   [
+    19.08,
+    23.1,
+    "And the fan in here has been spinning on its own when the power's off."
+   ],
+   [
+    23.12,
+    26.08,
+    "Which it shouldn't. I logged it."
+   ],
+   [
+    26.1,
+    27.76,
+    "Nobody answered."
+   ]
+  ]
+ },
+ "tape_varga1": {
+  "speaker": "Dr. Ilse Varga",
+  "lines": [
+   [
+    0.0,
+    3.32,
+    "Lab 3, day forty. Varga."
+   ],
+   [
+    4.08,
+    6.4,
+    "Specimen H-7 reacts to current."
+   ],
+   [
+    7.02,
+    12.14,
+    "Every time the generator runs, the readings climb, and the tank fluid turns toward the door."
+   ],
+   [
+    12.56,
+    14.38,
+    "Toward whoever is standing in it."
+   ],
+   [
+    14.74,
+    17.2,
+    "I've started to think the tank isn't where it is."
+   ],
+   [
+    17.68,
+    19.8,
+    "The tank is just where it listens from."
+   ],
+   [
+    20.24,
+    21.92,
+    "Everything is on the research drive."
+   ],
+   [
+    22.52,
+    25.92,
+    "If we lose the station, the drive is the only thing that matters."
+   ]
+  ]
+ },
+ "tape_varga2": {
+  "speaker": "Dr. Ilse Varga",
+  "lines": [
+   [
+    0.0,
+    1.76,
+    "If anyone finds this."
+   ],
+   [
+    2.06,
+    3.3,
+    "We thought we were studying it."
+   ],
+   [
+    3.32,
+    5.0,
+    "It was keeping count."
+   ],
+   [
+    5.36,
+    6.86,
+    "Every one of us who came down."
+   ],
+   [
+    7.08,
+    8.52,
+    "Every light we turned on."
+   ],
+   [
+    8.94,
+    10.2,
+    "It remembers all of it."
+   ],
+   [
+    10.54,
+    11.88,
+    "There are only three ways out of this."
+   ],
+   [
+    11.9,
+    15.26,
+    "Seal the station and let it starve in the dark."
+   ],
+   [
+    15.94,
+    17.86,
+    "Send the data up and let everyone know."
+   ],
+   [
+    17.98,
+    19.1,
+    "Or someone stays."
+   ],
+   [
+    19.58,
+    21.82,
+    "Someone keeps the lights off and keeps it company."
+   ],
+   [
+    22.52,
+    23.5,
+    "I couldn't choose."
+   ],
+   [
+    23.78,
+    25.1,
+    "Maybe the next one will."
+   ]
+  ]
+ },
+ "tape_mara": {
+  "speaker": "Mara",
+  "lines": [
+   [
+    0.0,
+    3.68,
+    "Expedition zero, day two. It's Mara."
+   ],
+   [
+    3.96,
+    6.4,
+    "They told us we were the first relay. We're not."
+   ],
+   [
+    6.74,
+    10.18,
+    "There's chalk on the walls down here that's older than us. Tally marks."
+   ],
+   [
+    10.34,
+    11.68,
+    "Someone's sleeping bag."
+   ],
+   [
+    11.84,
+    14.78,
+    "I'm leaving the keycard and a spare cell in the crate by the lift."
+   ],
+   [
+    14.96,
+    16.5,
+    "Whoever comes next, ration the light."
+   ],
+   [
+    16.52,
+    18.3,
+    "It listens when the power is on."
+   ],
+   [
+    18.32,
+    20.04,
+    "Leave something for the next one."
+   ],
+   [
+    20.06,
+    22.64,
+    "That's the only rule that works down here."
+   ]
+  ]
+ },
+ "tape_mara2": {
+  "speaker": "Mara",
+  "lines": [
+   [
+    0.0,
+    3.08,
+    "Expedition zero, day four. Mara."
+   ],
+   [
+    3.92,
+    5.12,
+    "There's a crawlspace behind the generator."
+   ],
+   [
+    5.14,
+    6.5,
+    "I pried the grate."
+   ],
+   [
+    6.52,
+    8.96,
+    "There's a camp at the end of it, and it isn't ours."
+   ],
+   [
+    8.98,
+    11.84,
+    "Their crates are full. Notes. Batteries. Names."
+   ],
+   [
+    11.94,
+    16.4,
+    "The tally on that wall goes back further than the station."
+   ],
+   [
+    16.42,
+    18.34,
+    "Halden wasn't built down here."
+   ],
+   [
+    18.36,
+    20.06,
+    "It was built on top of something."
+   ],
+   [
+    20.08,
+    22.58,
+    "I'm going to count them."
+   ]
+  ]
+ },
+ "tape_mara3": {
+  "speaker": "Mara",
+  "lines": [
+   [
+    0.0,
+    1.3,
+    "Day six."
+   ],
+   [
+    1.96,
+    3.62,
+    "I got into the records room."
+   ],
+   [
+    3.72,
+    4.88,
+    "The relay isn't new."
+   ],
+   [
+    5.12,
+    7.76,
+    "Every few years someone up top opens it again."
+   ],
+   [
+    8.08,
+    10.78,
+    "One name on the roster at a time, one per cage."
+   ],
+   [
+    11.34,
+    13.64,
+    "And every time, the count goes up by one."
+   ],
+   [
+    14.52,
+    17.58,
+    "Varga's sheet says it counted seven peaks when they were six."
+   ],
+   [
+    18.38,
+    20.3,
+    "I think I know who the seventh is."
+   ],
+   [
+    20.52,
+    22.08,
+    "It's whoever comes down next."
+   ]
+  ]
+ },
+ "tape_mara4": {
+  "speaker": "Mara",
+  "lines": [
+   [
+    0.0,
+    1.32,
+    "Last tape."
+   ],
+   [
+    1.78,
+    3.12,
+    "I understand it now."
+   ],
+   [
+    3.32,
+    5.96,
+    "It doesn't want the drive, and it doesn't want the power."
+   ],
+   [
+    6.02,
+    7.32,
+    "It wants the next one."
+   ],
+   [
+    7.58,
+    14.18,
+    "Every crate we stock, every note, every mark on the wall, is a promise that somebody else is coming down."
+   ],
+   [
+    14.58,
+    16.4,
+    "That's what it eats. The count."
+   ],
+   [
+    17.7,
+    19.56,
+    "So this is my real handoff."
+   ],
+   [
+    19.78,
+    20.56,
+    "Don't leave one."
+   ],
+   [
+    20.76,
+    25.24,
+    "Leave the crate empty, ride up with nothing in your hands, and don't let them send anyone after you."
+   ],
+   [
+    25.46,
+    27.88,
+    "Break the chain. I couldn't."
+   ],
+   [
+    27.94,
+    30.56,
+    "I left the keycard anyway. I'm sorry."
+   ]
+  ]
+ },
+ "tape_relay": {
+  "speaker": "Unknown",
+  "lines": [
+   [
+    0.0,
+    2.6,
+    "Relay two. Member four."
+   ],
+   [
+    3.24,
+    4.84,
+    "The lift only takes one."
+   ],
+   [
+    5.16,
+    7.58,
+    "If you're hearing this, I didn't go back up."
+   ],
+   [
+    7.92,
+    12.36,
+    "My crate is the one by the west wall. It's empty. I'm sorry."
+   ],
+   [
+    12.76,
+    13.84,
+    "I used everything."
+   ],
+   [
+    14.46,
+    17.02,
+    "Count the marks on the wall. Add yours."
+   ],
+   [
+    17.7,
+    18.64,
+    "Then keep going."
+   ]
+  ]
+ }
 }

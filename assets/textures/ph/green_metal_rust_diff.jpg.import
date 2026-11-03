@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://huoln5sjf28h"
 path.s3tc="res://.godot/imported/green_metal_rust_diff.jpg-6e5d216d892ce39e4e2c3044cced3800.s3tc.ctex"
+path.etc2="res://.godot/imported/green_metal_rust_diff.jpg-6e5d216d892ce39e4e2c3044cced3800.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/green_metal_rust_diff.jpg"
-dest_files=["res://.godot/imported/green_metal_rust_diff.jpg-6e5d216d892ce39e4e2c3044cced3800.s3tc.ctex"]
+dest_files=["res://.godot/imported/green_metal_rust_diff.jpg-6e5d216d892ce39e4e2c3044cced3800.s3tc.ctex", "res://.godot/imported/green_metal_rust_diff.jpg-6e5d216d892ce39e4e2c3044cced3800.etc2.ctex"]
 
 [params]
 

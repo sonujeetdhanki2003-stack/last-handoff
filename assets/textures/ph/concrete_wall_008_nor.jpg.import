@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdqkv7ewmqxbo"
 path.s3tc="res://.godot/imported/concrete_wall_008_nor.jpg-be1e237c057d4bd188c376272b2b6d15.s3tc.ctex"
+path.etc2="res://.godot/imported/concrete_wall_008_nor.jpg-be1e237c057d4bd188c376272b2b6d15.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/concrete_wall_008_nor.jpg"
-dest_files=["res://.godot/imported/concrete_wall_008_nor.jpg-be1e237c057d4bd188c376272b2b6d15.s3tc.ctex"]
+dest_files=["res://.godot/imported/concrete_wall_008_nor.jpg-be1e237c057d4bd188c376272b2b6d15.s3tc.ctex", "res://.godot/imported/concrete_wall_008_nor.jpg-be1e237c057d4bd188c376272b2b6d15.etc2.ctex"]
 
 [params]
 

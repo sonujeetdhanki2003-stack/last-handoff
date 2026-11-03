@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bn2siy40u556r"
 path.s3tc="res://.godot/imported/concrete_floor_damaged_01_nor.jpg-0b58f00f98f8d42778c9ab5341c3f553.s3tc.ctex"
+path.etc2="res://.godot/imported/concrete_floor_damaged_01_nor.jpg-0b58f00f98f8d42778c9ab5341c3f553.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/concrete_floor_damaged_01_nor.jpg"
-dest_files=["res://.godot/imported/concrete_floor_damaged_01_nor.jpg-0b58f00f98f8d42778c9ab5341c3f553.s3tc.ctex"]
+dest_files=["res://.godot/imported/concrete_floor_damaged_01_nor.jpg-0b58f00f98f8d42778c9ab5341c3f553.s3tc.ctex", "res://.godot/imported/concrete_floor_damaged_01_nor.jpg-0b58f00f98f8d42778c9ab5341c3f553.etc2.ctex"]
 
 [params]
 

@@ -13,6 +13,23 @@ func find_interactable(n: String) -> Node:
 
 func _ready() -> void:
 	_static_shadows(self, false)
+	# Phase 6: occlusion culling + per-preset draw distances / shadow budget
+	if not Harness.has("noocc"):
+		Quality.build_occluders(self)
+	GfxUpgrade.level(self)   # v1.1: Blender props + baked AO (after the occluders read the boxes)
+	GfxV12.level(self)       # v1.2: Blender lift car, shaft steelwork, call box, winch
+	apply_quality()
+	if not Engine.is_editor_hint():
+		Settings.changed.connect(_on_setting)
+
+
+func _on_setting(section: String, key: String, _v: Variant) -> void:
+	if section == "video" and key == "quality":
+		apply_quality()
+
+
+func apply_quality() -> void:
+	Quality.apply_level(self, int(Settings.get_value("video", "quality")))
 
 
 ## Anything that moves every frame (fans, flywheels, swaying cables, beacons,

@@ -11,7 +11,7 @@ signal state_changed(state: String)    # "ok", "injured", "critical", "dead"
 signal died(cause: String)
 signal winded
 
-const SPRINT_DRAIN := 0.2        # per second -> 5 s of sprint from full
+const SPRINT_DRAIN := 0.16       # per second -> 6.25 s of sprint from full (Phase 6, was 0.2)
 const REGEN := 0.22              # per second
 const REGEN_DELAY := 0.9
 const RECOVER_AT := 0.35

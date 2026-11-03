@@ -52,11 +52,7 @@ func apply_quality() -> void:
 	if environment == null:
 		return
 	var q: int = Settings.get_value("video", "quality")
-	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
-	environment.ssao_enabled = q >= 1 and not compat
-	environment.ssil_enabled = q >= 2 and not compat
-	environment.volumetric_fog_enabled = q >= 2 and not compat
-	environment.glow_enabled = true
+	Quality.apply_environment(environment, q)
 	if Harness.has("nossao"):
 		environment.ssao_enabled = false
 	if Harness.has("nossil"):
@@ -64,5 +60,3 @@ func apply_quality() -> void:
 	if Harness.has("nofog"):
 		environment.volumetric_fog_enabled = false
 	environment.adjustment_brightness = Settings.get_value("video", "brightness")
-	# Compatibility renderer has no volumetric fog: lean on depth fog instead.
-	environment.fog_density = 0.035 if (q >= 2 and not compat) else 0.05

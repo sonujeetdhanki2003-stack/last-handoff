@@ -47,6 +47,24 @@ func _build_locker() -> void:
 	var w := 0.62
 	var dpt := 0.55
 	var h := 1.95
+	if GfxAssets.mesh("locker_body") and GfxAssets.mesh("locker_door"):
+		# v1.1: the Blender locker (pressed sides, louvred door, latch, hinges, name card)
+		var body := GfxAssets.instance("locker_body", steel)
+		add_child(body)
+		GfxAssets.shadow_proxy(body, self, Vector3(w, h, dpt - 0.03), Vector3(0, h / 2, -0.015))
+		_door = Node3D.new()
+		_door.position = Vector3(-w / 2, 0, dpt / 2)
+		add_child(_door)
+		var dm := GfxAssets.instance("locker_door", steel)
+		_door.add_child(dm)
+		GfxAssets.shadow_proxy(dm, _door, Vector3(w, h - 0.04, 0.025), Vector3(w / 2, h / 2, 0))
+		var cs1 := CollisionShape3D.new()
+		var bs1 := BoxShape3D.new()
+		bs1.size = Vector3(w, h, dpt)
+		cs1.shape = bs1
+		cs1.position = Vector3(0, h / 2, 0)
+		add_child(cs1)
+		return
 	_box(self, Vector3(w, h, 0.03), Vector3(0, h / 2, -dpt / 2), steel)          # back
 	_box(self, Vector3(0.03, h, dpt), Vector3(-w / 2, h / 2, 0), steel)           # sides
 	_box(self, Vector3(0.03, h, dpt), Vector3(w / 2, h / 2, 0), steel)
@@ -81,6 +99,33 @@ func get_prompt(_a: Node) -> String:
 	return prompt
 
 
+## v1.2 fake-out: the empty locker's door shudders on its hinges (FakeoutDirector).
+## Visual + sound only: no noise event, the Keeper does not hear it.
+var rattling := false
+func rattle() -> bool:
+	if kind != "locker" or occupant != null or _door == null or rattling:
+		return false
+	rattling = true
+	var p := AudioStreamPlayer3D.new()
+	p.bus = &"SFX"
+	p.stream = load("res://audio/sfx/locker_rattle.wav")
+	p.unit_size = 4.0
+	p.max_distance = 30.0
+	p.volume_db = -3.0
+	p.position.y = 1.2
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+	Sfx.caption_for("locker_rattle", global_position + Vector3.UP)
+	var base := _door.rotation.y
+	var tw := create_tween()
+	for i in 9:
+		tw.tween_property(_door, "rotation:y", base + deg_to_rad(randf_range(1.5, 4.0)) * (1.0 - i / 10.0), 0.04)
+		tw.tween_property(_door, "rotation:y", base, 0.05)
+	tw.tween_callback(func(): rattling = false)
+	return true
+
+
 func can_interact(a: Node) -> bool:
 	return occupant == null and a is Player and not (a as Player).dead
 
@@ -100,7 +145,7 @@ func interact(actor: Node) -> void:
 	view.current = true
 	_swing(true)
 	Events.noise.emit(global_position, 2.5, "locker")
-	Events.toast.emit("Hiding. Press E to come out.")
+	Events.toast.emit("Hiding. Press %s to come out." % Ux.glyph("interact"))
 	super.interact(actor)
 
 
@@ -135,5 +180,5 @@ func _swing(_open: bool) -> void:
 	if _door == null:
 		return
 	var t := create_tween()
-	t.tween_property(_door, "rotation:y", -1.2, 0.18)
-	t.tween_property(_door, "rotation:y", 0.0, 0.25)
+	t.tween_property(_door, "rotation:y", -1.2, 0.12)
+	t.tween_property(_door, "rotation:y", 0.0, 0.14)   # Phase 6: the door slams shut faster

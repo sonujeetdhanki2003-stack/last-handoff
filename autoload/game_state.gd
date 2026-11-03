@@ -30,6 +30,9 @@ var resume_player := {}        ## player position/vitals when continuing a saved
 var difficulty := 1.0          ## keeper speed scale (the freezer decision lowers it)
 var play_intro := false        ## Phase 5: the next game scene opens with the lift cold-open
 var title_card := false        ## Phase 5: the next game scene opens with the expedition title card
+var chapter_run := ""          ## v1.2: a chapter-select run (self-contained, never written to the chain)
+var chapter_keeper_at: Variant = null   ## v1.2: where the Keeper starts in that chapter (null = its lair)
+var chapter_wake := -1.0       ## v1.2: seconds until the Keeper wakes in that chapter (-1 = as usual)
 
 
 func _ready() -> void:
@@ -51,6 +54,9 @@ func new_expedition(p_seed := -1) -> void:
 	elapsed = 0.0
 	battery_charge = 0.6
 	chain_mode = false
+	chapter_run = ""
+	chapter_keeper_at = null
+	chapter_wake = -1.0
 	member_name = ""
 	deepest = "shaft"
 	old_codes = []

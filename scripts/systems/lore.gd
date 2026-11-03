@@ -66,6 +66,7 @@ const SYMBOLS := {
 ## Depth: area id -> [rank, name]
 const DEPTH := {
 	"shaft": [0, "Entrance shaft"],
+	"winch": [0, "Lift winch room"],
 	"corridor": [1, "B2 corridor"],
 	"generator": [2, "Generator room"],
 	"security": [2, "Security office"],

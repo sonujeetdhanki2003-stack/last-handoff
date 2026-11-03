@@ -18,17 +18,42 @@ var _boom: AudioStreamPlayer3D
 var _flash: OmniLight3D
 
 
+var _haze: MeshInstance3D          ## fallback haze where volumetric fog is off (Low, Phone, GLES3)
+
+
 func _ready() -> void:
 	add_to_group("hazards")
-	_fog = FogVolume.new()
-	_fog.size = size
-	var fm := FogMaterial.new()
-	fm.density = 0.35
-	fm.albedo = Color(0.55, 0.7, 0.3)
-	fm.emission = Color(0.03, 0.05, 0.01)
-	fm.edge_fade = 0.4
-	_fog.material = fm
-	add_child(_fog)
+	# FogVolume only renders with Forward+ volumetric fog; the OpenGL fallback can't even compile it
+	if RenderingServer.get_current_rendering_method() != "gl_compatibility":
+		_fog = FogVolume.new()
+		_fog.size = size
+		var fm := FogMaterial.new()
+		fm.density = 0.35
+		fm.albedo = Color(0.55, 0.7, 0.3)
+		fm.emission = Color(0.03, 0.05, 0.01)
+		fm.edge_fade = 0.4
+		_fog.material = fm
+		add_child(_fog)
+	_haze = MeshInstance3D.new()
+	_haze.name = "Haze"
+	var bm := BoxMesh.new()
+	bm.size = size
+	_haze.mesh = bm
+	var hm := StandardMaterial3D.new()
+	hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hm.cull_mode = BaseMaterial3D.CULL_DISABLED
+	hm.albedo_color = Color(0.5, 0.68, 0.26, 0.22)
+	hm.proximity_fade_enabled = true
+	hm.proximity_fade_distance = 0.8
+	hm.disable_receive_shadows = true
+	_haze.material_override = hm
+	_haze.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_haze)
+	_update_haze.call_deferred()   # after WorldEnv has applied the preset
+	Settings.changed.connect(func(s, _k, _v):
+		if s == "video":
+			_update_haze.call_deferred())
 	_hiss = AudioStreamPlayer3D.new()
 	_hiss.bus = &"Ambience"
 	_hiss.unit_size = 3.0
@@ -60,9 +85,9 @@ func _physics_process(delta: float) -> void:
 	_flash.light_energy = move_toward(_flash.light_energy, 0.0, delta * 12.0)
 	if burnt_t > 0.0:
 		burnt_t -= delta
-		_fog.visible = false
+		_set_gas_visible(false)
 		if burnt_t <= 0.0:
-			_fog.visible = true
+			_set_gas_visible(true)
 		return
 	if not GameState.threat_enabled:
 		return
@@ -98,3 +123,24 @@ func ignite(pl: Player) -> void:
 		var away := pl.global_position - global_position
 		away.y = 0
 		pl.velocity += away.normalized() * 6.0
+
+
+func volumetric_active() -> bool:
+	if _fog == null or not is_inside_tree():
+		return false
+	var env: Environment = get_viewport().get_world_3d().environment if get_viewport() and get_viewport().get_world_3d() else null
+	return env != null and env.volumetric_fog_enabled and RenderingServer.get_current_rendering_method() == "forward_plus"
+
+
+func _update_haze() -> void:
+	_set_gas_visible(burnt_t <= 0.0)
+
+
+## The green gas must read on every renderer and preset: volumetric fog where it runs,
+## otherwise a translucent haze box.
+func _set_gas_visible(v: bool) -> void:
+	var vol := volumetric_active()
+	if _fog:
+		_fog.visible = v
+	if _haze:
+		_haze.visible = v and not vol

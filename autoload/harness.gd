@@ -14,6 +14,9 @@ func _ready() -> void:
 			args[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	if has("quality"):
 		Settings.set_value("video", "quality", int(get_arg("quality")), false)
+	if has("nosubs"):
+		Settings.set_value("access", "subtitles", false, false)
+		Settings.set_value("access", "captions", false, false)
 	if has("shot"):
 		process_mode = Node.PROCESS_MODE_ALWAYS
 		_run_shot.call_deferred(get_arg("shot"), get_arg("out", "/tmp/shot.png"))
@@ -116,6 +119,23 @@ func _run_shot(name_: String, out: String) -> void:
 	var settle := int(get_arg("frames", "90"))
 	match name_:
 		"menu":
+			await _frames(settle)
+		"menu_howto", "menu_achievements", "menu_chapters":   # v1.2 screens
+			var m := get_tree().current_scene
+			if has("demo_progress"):
+				Progress.use_path("user://shot_progress.json")
+				for id in ["descent", "generator", "lab_power", "repel", "hide", "engineer", "tapes"]:
+					Progress.unlock(id, true)
+				for c in ["descent", "power", "lab"]:
+					Progress.open_chapter(c, true)
+			await _frames(5)
+			m.call("open_" + name_.trim_prefix("menu_"))
+			if has("page"):
+				var sc: Node = m.get_node_or_null("HowToPlay")
+				for x in m.find_children("*", "HowToPlayScreen", true, false):
+					sc = x
+				if sc and sc.has_method("set_page"):
+					sc.set_page(int(get_arg("page")))
 			await _frames(settle)
 		"menu_settings":
 			var m := get_tree().current_scene
@@ -372,6 +392,8 @@ func _run_shot(name_: String, out: String) -> void:
 			cam.add_child(sl)
 			sl.position = Vector3(0.35, -0.2, 0)
 			await _frames(4)
+			if get_arg("clip", "") != "":
+				k.pose_clip(get_arg("clip", ""), float(get_arg("clip_t", "0")))
 			if k.poser:
 				for kv in get_arg("pose", "").split(",", false):
 					var pr := kv.split("=")
@@ -379,6 +401,7 @@ func _run_shot(name_: String, out: String) -> void:
 				k.set_physics_process(not has("freeze"))
 			await _frames(settle)
 		"handoff":
+			Legacy.begin_expedition()   # a real chain member (name, expedition number)
 			var g: Node = await _game()
 			for it in ["keycard_blue", "battery", "fuse", "medkit"]:
 				GameState.inventory.add(it)
@@ -497,6 +520,15 @@ func _run_shot(name_: String, out: String) -> void:
 			await _frames(10)
 			Events.expedition_ended.emit("extracted")
 			await _frames(settle)
+		"session":
+			await _session()
+			get_tree().quit(0)
+			return
+		"keeper_preview":
+			# v1.1 preview reel (tools/keeper_anim/keeper_preview.gd), meant for --write-movie
+			await load("res://tools/keeper_anim/keeper_preview.gd").new().run(self)
+			get_tree().quit(0)
+			return
 		_:
 			push_error("unknown shot " + name_)
 	await RenderingServer.frame_post_draw
@@ -504,3 +536,170 @@ func _run_shot(name_: String, out: String) -> void:
 	img.save_png(out)
 	print("SHOT SAVED ", out, " ", img.get_size())
 	get_tree().quit(0)
+
+
+
+# ------------------------------------------------------------------ scripted session
+## `-- --shot=session` : a scripted ~10 minute play session for release smoke tests
+## (Windows build under Wine, or any desktop): menu -> intro -> explore every area ->
+## hide in a locker -> Keeper -> die -> handoff -> next member -> pause / save & quit ->
+## Continue -> extract -> handoff -> an ending -> end card. Uses its own save file.
+## Prints "SESSION step ..." lines and "SESSION DONE" at the end.
+func _step(s: String) -> void:
+	print("SESSION step %s  t=%.1fs  fps=%d" % [s, Time.get_ticks_msec() / 1000.0, Engine.get_frames_per_second()])
+
+
+func _wait_game(prev: Variant) -> Node:
+	var prev_id: int = prev.get_instance_id() if is_instance_valid(prev) else 0
+	for i in 3000:
+		await get_tree().process_frame
+		var sc := get_tree().current_scene
+		if sc and sc.get_instance_id() != prev_id and sc.name == "Game" and sc.is_node_ready():
+			await _frames(5)
+			return sc
+	push_error("SESSION: game scene never loaded")
+	return null
+
+
+func _wait_menu() -> Node:
+	for i in 3000:
+		await get_tree().process_frame
+		var sc := get_tree().current_scene
+		if sc and sc.has_method("open_history"):
+			await _frames(5)
+			return sc
+	push_error("SESSION: menu never loaded")
+	return null
+
+
+func _tour(g: Node, frames_each: int) -> void:
+	for a in Zones.RECTS:
+		var r: Array = Zones.RECTS[a]
+		var c := Vector3((r[0] + r[1]) * 0.5, 0.05, (r[2] + r[3]) * 0.5)
+		var map: RID = g.get_world_3d().navigation_map
+		var q := NavigationServer3D.map_get_closest_point(map, c)
+		if Zones.area_at(q) == a:
+			c = q + Vector3(0, 0.1, 0)
+		g.player.global_position = c
+		g.player.velocity = Vector3.ZERO
+		await _frames(frames_each)
+		if g.player.global_position.y < -3.0:
+			push_error("SESSION: player fell out of the map in " + str(a))
+		_step("explored " + str(a))
+
+
+func _resume_if_paused(g: Node) -> void:
+	var pm: Node = g.get_node_or_null("PauseMenu")
+	if pm and pm.is_open():
+		pm.resume()
+	g.player.set_control(true)
+
+
+func _session() -> void:
+	var fpe := int(get_arg("fpe", "90"))
+	Legacy.use_path("user://session_chain.json")
+	Settings.set_value("video", "calibrated", true, false)
+	_step("menu")
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	var m := await _wait_menu()
+	m.open_history()
+	await _frames(30)
+	m._close_sub()
+	m.open_settings()
+	for tab in 4:
+		m._settings.set_tab(tab, false)
+		await _frames(10)
+	m._settings.go_back()
+	_step("start chain")
+	m._start()
+	var g := await _wait_game(null)
+	_step("intro")
+	await _frames(fpe * 3)
+	Ux.go_back()   # Esc skips the intro
+	await _frames(fpe)
+	_resume_if_paused(g)
+	await _tour(g, fpe)
+	_step("hide")
+	var spots := get_tree().get_nodes_in_group("hiding_spots")
+	if not spots.is_empty():
+		var hs: Node = spots[0]
+		g.player.global_position = hs.outside_point()
+		await _frames(10)
+		hs.interact(g.player)
+		await _frames(fpe)
+		hs.leave(g.player)
+		await _frames(fpe / 2)
+	_step("keeper")
+	if g.keeper == null:
+		g.spawn_keeper()
+	g.keeper.global_position = g.player.global_position + Vector3(2.5, 0, 0)
+	await _frames(fpe * 2)
+	_step("die")
+	g.player.vitals.damage(1000.0, "keeper")
+	for i in 600:
+		await get_tree().process_frame
+		if g.hud.handoff != null and g.hud.handoff.visible:
+			break
+	_step("handoff")
+	var h: HandoffScreen = g.hud.handoff
+	h.select_template(2)
+	h._custom_edit.text = "keep the light low [b]near the lift[/b]"
+	h.set_custom(h._custom_edit.text)
+	var ch: Array = Legacy.handoff_choices()
+	if not ch.is_empty():
+		h.select_item(str(ch[0]))
+	h.select_symbol(str(Lore.SYMBOLS.keys()[0]))
+	await _frames(30)
+	h.confirm()
+	await _frames(fpe)
+	_step("next member")
+	h.next_member()
+	g = await _wait_game(g)
+	await _frames(fpe * 2)
+	Ux.go_back()
+	await _frames(fpe)
+	_resume_if_paused(g)
+	await _frames(fpe)
+	_step("crate + pause")
+	Ux.go_back()   # opens the pause menu
+	await _frames(fpe)
+	var pm: Node = g.get_node("PauseMenu")
+	if not pm.is_open():
+		push_error("SESSION: pause menu did not open")
+	pm._open_settings()
+	await _frames(30)
+	pm._close_settings()
+	_step("save and quit to menu")
+	pm._to_menu()
+	m = await _wait_menu()
+	_step("continue")
+	m._continue()
+	g = await _wait_game(g)
+	await _tour(g, fpe / 2)
+	_step("extract")
+	GameState.inventory.add("research_drive")
+	Events.expedition_ended.emit("extracted")
+	for i in 600:
+		await get_tree().process_frame
+		if g.hud.handoff != null and g.hud.handoff.visible:
+			break
+	g.hud.handoff.select_template(0)
+	g.hud.handoff.confirm()
+	await _frames(fpe)
+	_step("third member -> ending")
+	g.hud.handoff.next_member()
+	g = await _wait_game(g)
+	await _frames(fpe)
+	Legacy.decide("power_route", "freezer")
+	Legacy.decide("drive", "destroyed")
+	EndingDirector.time_scale = float(get_arg("speed", "2"))
+	Events.ending_started.emit("seal")
+	for i in 20000:
+		await get_tree().process_frame
+		if g.hud.end_card != null and g.hud.end_card.visible and g.hud.end_card.fully_shown:
+			break
+	await _frames(fpe)
+	_step("end card")
+	print("SESSION history rows ", Legacy.history_rows(false).size(), " ending ", Legacy.ending_reached())
+	SaveIO.delete_all("user://session_chain.json")
+	print("SESSION DONE")

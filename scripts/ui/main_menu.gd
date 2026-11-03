@@ -7,6 +7,9 @@ var _left: Control
 var _settings: SettingsMenu
 var _credits: TermPanel
 var _history: HistoryScreen
+var _howto: HowToPlayScreen
+var _achieve: AchievementsScreen
+var _chapters: ChaptersScreen
 var _bright: BrightnessScreen
 var _dim: ScreenBackdrop
 var _notice: Label
@@ -15,6 +18,7 @@ var _cam: Camera3D
 var _t := 0.0
 var _return_focus: Control
 var buttons := {}
+var _top: Control
 
 
 func _ready() -> void:
@@ -79,7 +83,8 @@ func _build_ui() -> void:
 	_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(_left)
 	var top := VBoxContainer.new()
-	top.position = Vector2(112, 86)
+	_top = top
+	top.position = Vector2(112, 70)
 	top.add_theme_constant_override("separation", 0)
 	top.custom_minimum_size.x = 640
 	_left.add_child(top)
@@ -90,7 +95,7 @@ func _build_ui() -> void:
 	top.add_child(UIKit.rule(UIKit.AMBER, 3, 160))
 	top.add_child(UIKit.spacer(12))
 	top.add_child(UIKit.shadowed(UIKit.label("Every expedition hands off to the next.", 27, Color(0.7, 0.71, 0.68), "ui")))
-	top.add_child(UIKit.spacer(26))
+	top.add_child(UIKit.spacer(16))
 	_status = RichTextLabel.new()
 	_status.bbcode_enabled = true
 	_status.fit_content = true
@@ -106,17 +111,18 @@ func _build_ui() -> void:
 	top.add_child(_status)
 	_notice = UIKit.label(Legacy.load_notice, 20, UIKit.RED, "ui")
 	top.add_child(_notice)
-	top.add_child(UIKit.spacer(30))
+	top.add_child(UIKit.spacer(18))
 
 	_main = VBoxContainer.new()
-	_main.add_theme_constant_override("separation", 6)
+	_main.add_theme_constant_override("separation", 2)
 	_main.custom_minimum_size.x = 560
 	_main.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	top.add_child(_main)
 	for pair in [["Continue", "CONTINUE", _continue], ["Start", "NEW EXPEDITION", _start],
-			["History", "EXPEDITION HISTORY", open_history], ["Settings", "SETTINGS", open_settings],
-			["Credits", "CREDITS", open_credits], ["Quit", "QUIT", _quit]]:
-		var b := UIKit.button(pair[1], 34)
+			["Chapters", "CHAPTERS", open_chapters], ["History", "EXPEDITION HISTORY", open_history],
+			["Achievements", "ACHIEVEMENTS", open_achievements], ["HowTo", "HOW TO PLAY", open_howto],
+			["Settings", "SETTINGS", open_settings], ["Credits", "CREDITS", open_credits], ["Quit", "QUIT", _quit]]:
+		var b := UIKit.button(pair[1], 29)
 		b.name = pair[0]
 		b.pressed.connect(pair[2])
 		_main.add_child(b)
@@ -156,12 +162,26 @@ func _build_ui() -> void:
 	_history.visible = false
 	_history.back.connect(_close_sub)
 	center.add_child(_history)
+	_howto = HowToPlayScreen.new()
+	_howto.visible = false
+	_howto.back.connect(_close_sub)
+	center.add_child(_howto)
+	_achieve = AchievementsScreen.new()
+	_achieve.visible = false
+	_achieve.back.connect(_close_sub)
+	center.add_child(_achieve)
+	_chapters = ChaptersScreen.new()
+	_chapters.visible = false
+	_chapters.back.connect(_close_sub)
+	_chapters.start.connect(start_chapter)
+	center.add_child(_chapters)
 	_bright = BrightnessScreen.new()
 	_bright.visible = false
 	_bright.done.connect(_on_bright_done)
 	_ui.add_child(_bright)
 
 	_refresh_buttons()
+	get_viewport().size_changed.connect(fit_column)
 	if not bool(Settings.get_value("video", "calibrated")) and not Harness.has("shot") and DisplayServer.get_name() != "headless":
 		open_brightness(false)
 	else:
@@ -220,7 +240,7 @@ Oswald, Barlow Condensed, IBM Plex Mono, Caveat (SIL Open Font License). Special
 Sound effects, Keeper voice, stingers and UI sounds generated for this project. Room tones, drones and machinery synthesised in code. Tape and PA voices: text-to-speech recorded for this project.
 
 [b]Engine[/b]
-Godot Engine 4.7 (MIT licence).
+Godot Engine 4.7 (MIT licence). 3D props, the Keeper's animations and sculpt, and the v1.2 lift and winch room were made for this project in Blender. The v1.2 heartbeat, locker rattle and vent creak are synthesised in code.
 
 [color=#8a8d88]Fully offline. No accounts, no purchases, no telemetry.
 The full list of assets and licences is in CREDITS.md.[/color]"""
@@ -240,7 +260,7 @@ func _open_sub(c: Control, from: Control) -> void:
 
 
 func _close_sub() -> void:
-	for c in [_settings, _credits, _history]:
+	for c in [_settings, _credits, _history, _howto, _achieve, _chapters]:
 		c.visible = false
 	_dim.visible = false
 	_left.visible = true
@@ -270,6 +290,27 @@ func open_history() -> void:
 	_history.focus_first()
 
 
+func open_howto() -> void:
+	_open_sub(_howto, buttons["HowTo"])
+	_howto.open()
+
+
+func open_achievements() -> void:
+	_open_sub(_achieve, buttons["Achievements"])
+	_achieve.open()
+
+
+func open_chapters() -> void:
+	_open_sub(_chapters, buttons["Chapters"])
+	_chapters.open()
+
+
+## v1.2: a chapter replay (never touches the chain or the Continue slot).
+func start_chapter(id: String) -> void:
+	if Progress.begin_chapter(id):
+		Ux.change_scene("res://scenes/game.tscn", 0.8, 0.01 if GameState.play_intro else 0.9)
+
+
 func open_brightness(from_settings: bool) -> void:
 	_bright.from_settings = from_settings
 	_settings.visible = false if from_settings else _settings.visible
@@ -292,13 +333,34 @@ func _on_bright_done() -> void:
 func current_screen() -> String:
 	if _bright.visible:
 		return "brightness"
-	for pair in [[_settings, "settings"], [_credits, "credits"], [_history, "history"]]:
+	for pair in [[_settings, "settings"], [_credits, "credits"], [_history, "history"], [_howto, "howto"],
+			[_achieve, "achievements"], [_chapters, "chapters"]]:
 		if (pair[0] as Control).visible:
 			return pair[1]
 	return "main"
 
 
+## The menu column must clear the footer (hint bar + version) at every aspect ratio,
+## with CONTINUE and a save-repair notice showing: lift it when it would collide.
+func fit_column() -> void:
+	if _top == null:
+		return
+	var vs := get_viewport().get_visible_rect().size
+	var h := _top.get_combined_minimum_size().y
+	# v1.2: nine entries now; on a short (wide) screen the column shrinks a little to fit
+	var avail := vs.y - 84.0 - 16.0
+	var s := clampf(avail / h, 0.8, 1.0)
+	_top.scale = Vector2(s, s)
+	_top.position.y = clampf(vs.y - 84.0 - h * s, 16.0, 70.0)
+	_top.size.y = h
+
+
+func column_bottom() -> float:
+	return _top.position.y + _top.get_combined_minimum_size().y * _top.scale.y
+
+
 func _refresh_buttons() -> void:
+	fit_column.call_deferred()
 	var cont: Button = buttons["Continue"]
 	var start: Button = buttons["Start"]
 	cont.visible = Legacy.has_run_in_progress()
@@ -356,3 +418,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			Ux.ui_sound("back")
 			_close_sub()
+		elif _left.visible and not _settings.visible and not _history.visible and not _howto.visible and not _achieve.visible and not _chapters.visible and is_visible_in_tree():
+			# top level (the Android back button lands here too): first press goes to QUIT,
+			# a second one on QUIT leaves the game, like most phone games
+			get_viewport().set_input_as_handled()
+			var q: Button = buttons["Quit"]
+			if q.has_focus():
+				_quit()
+			else:
+				Ux.ui_sound("back")
+				q.grab_focus()

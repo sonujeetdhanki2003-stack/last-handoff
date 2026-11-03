@@ -56,6 +56,8 @@ func load_chain() -> void:
 		if r["source"] == "backup":
 			load_notice = "Your save file was damaged. Restored the previous save."
 			save()
+		elif r["source"] == "tmp":
+			save()   # the newest save survived a cut-off write; make it the main file again
 	else:
 		chain = fresh_chain()
 		if SaveIO.last_status == "corrupt_reset":
@@ -66,10 +68,23 @@ func load_chain() -> void:
 func _migrate(d: Dictionary) -> Dictionary:
 	var base := fresh_chain()
 	for k in base:
+		# Phase 6: a missing key OR a value of the wrong type (an old or hand-edited
+		# save) takes the default instead of crashing later. "run" may be null.
 		if not d.has(k):
 			d[k] = base[k]
+		elif k == "run":
+			if d[k] != null and not (d[k] is Dictionary):
+				d[k] = null
+		elif typeof(base[k]) in [TYPE_INT, TYPE_FLOAT]:
+			if not (typeof(d[k]) in [TYPE_INT, TYPE_FLOAT]):
+				d[k] = base[k]
+		elif typeof(d[k]) != typeof(base[k]):
+			d[k] = base[k]
+	# entries inside the lists must be dictionaries too
+	for k in ["history", "marks", "notes", "remains"]:
+		d[k] = (d[k] as Array).filter(func(e): return e is Dictionary)
 	# JSON numbers come back as floats
-	d["next_expedition"] = int(d["next_expedition"])
+	d["next_expedition"] = maxi(int(d["next_expedition"]), Lore.FIRST_EXPEDITION)
 	d["chain_id"] = int(d["chain_id"])
 	return d
 
@@ -108,8 +123,10 @@ func next_expedition() -> int:
 	return int(chain["next_expedition"])
 
 
+var practice := {}   ## v1.2: decisions taken in a chapter run (never written to the chain)
 func decision(id: String) -> String:
-	var d: Variant = chain["decisions"].get(id)
+	var src: Dictionary = practice if GameState.chapter_run != "" else chain["decisions"]
+	var d: Variant = src.get(id)
 	return str(d.get("choice", "")) if d is Dictionary else ""
 
 
@@ -184,6 +201,8 @@ func save_run(player_state: Dictionary) -> void:
 
 
 func record_tape(id: String) -> void:
+	if GameState.chapter_run != "":
+		return   # a chapter run never writes the chain (the flag still counts for this run)
 	if not chain["tapes"].get(id, false):
 		chain["tapes"][id] = true
 		if GameState.chain_mode:
@@ -193,6 +212,11 @@ func record_tape(id: String) -> void:
 func decide(id: String, choice: String) -> bool:
 	if decision(id) != "":
 		return false
+	if GameState.chapter_run != "":
+		practice[id] = {"choice": choice, "expedition": GameState.expedition_number, "member": GameState.member_name}
+		GameState.set_flag("decision_" + id, choice)
+		decision_made.emit(id, choice)
+		return true
 	chain["decisions"][id] = {"choice": choice, "expedition": GameState.expedition_number, "member": GameState.member_name}
 	GameState.set_flag("decision_" + id, choice)
 	decision_made.emit(id, choice)
@@ -278,6 +302,11 @@ func commit_handoff(message: String, custom: String, item: String, symbol: Strin
 	pending = {}
 	save()
 	chain_changed.emit()
+	# v1.2 achievements
+	if not refuse and (item != "" or message != "" or custom != ""):
+		Progress.unlock("relay")
+	if expeditions_done() >= 5:
+		Progress.unlock("five")
 	return entry
 
 

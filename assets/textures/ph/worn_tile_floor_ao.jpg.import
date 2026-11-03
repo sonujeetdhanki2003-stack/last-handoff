@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bdyij7cn7eaof"
 path.s3tc="res://.godot/imported/worn_tile_floor_ao.jpg-8a8c330b57f4e77e969b405f4f9516c6.s3tc.ctex"
+path.etc2="res://.godot/imported/worn_tile_floor_ao.jpg-8a8c330b57f4e77e969b405f4f9516c6.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/worn_tile_floor_ao.jpg"
-dest_files=["res://.godot/imported/worn_tile_floor_ao.jpg-8a8c330b57f4e77e969b405f4f9516c6.s3tc.ctex"]
+dest_files=["res://.godot/imported/worn_tile_floor_ao.jpg-8a8c330b57f4e77e969b405f4f9516c6.s3tc.ctex", "res://.godot/imported/worn_tile_floor_ao.jpg-8a8c330b57f4e77e969b405f4f9516c6.etc2.ctex"]
 
 [params]
 

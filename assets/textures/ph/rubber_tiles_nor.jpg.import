@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://b62jg8kcej20q"
 path.s3tc="res://.godot/imported/rubber_tiles_nor.jpg-f0f5ba50897d1ae4e99aa5a3fb523e74.s3tc.ctex"
+path.etc2="res://.godot/imported/rubber_tiles_nor.jpg-f0f5ba50897d1ae4e99aa5a3fb523e74.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/rubber_tiles_nor.jpg"
-dest_files=["res://.godot/imported/rubber_tiles_nor.jpg-f0f5ba50897d1ae4e99aa5a3fb523e74.s3tc.ctex"]
+dest_files=["res://.godot/imported/rubber_tiles_nor.jpg-f0f5ba50897d1ae4e99aa5a3fb523e74.s3tc.ctex", "res://.godot/imported/rubber_tiles_nor.jpg-f0f5ba50897d1ae4e99aa5a3fb523e74.etc2.ctex"]
 
 [params]
 

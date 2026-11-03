@@ -12,6 +12,7 @@ const RECTS := {
 	"archive": [1.6, 9.0, -21.5, -12.0],
 	"crawlspace": [-18.0, -10.0, -6.4, -4.6],
 	"deep": [-25.0, -18.0, -10.0, -1.5],
+	"winch": [4.15, 10.0, 1.0, 7.0],   # v1.2: the lift winch room off the shaft
 }
 
 

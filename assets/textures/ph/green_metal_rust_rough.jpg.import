@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://4kiml01jc65t"
 path.s3tc="res://.godot/imported/green_metal_rust_rough.jpg-77eb70cfc09ac80426c4262619c981d7.s3tc.ctex"
+path.etc2="res://.godot/imported/green_metal_rust_rough.jpg-77eb70cfc09ac80426c4262619c981d7.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/green_metal_rust_rough.jpg"
-dest_files=["res://.godot/imported/green_metal_rust_rough.jpg-77eb70cfc09ac80426c4262619c981d7.s3tc.ctex"]
+dest_files=["res://.godot/imported/green_metal_rust_rough.jpg-77eb70cfc09ac80426c4262619c981d7.s3tc.ctex", "res://.godot/imported/green_metal_rust_rough.jpg-77eb70cfc09ac80426c4262619c981d7.etc2.ctex"]
 
 [params]
 

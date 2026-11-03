@@ -84,6 +84,7 @@ func _build() -> void:
 	glass.metallic = 0.2
 	glass.roughness = 0.08
 	w.material_override = glass
+	_v11_meshes(t, frame_mat, panel_mat)
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
 	bs.size = Vector3(width, height, 0.14)
@@ -121,6 +122,39 @@ func _build() -> void:
 		if s:
 			_sound.stream = s
 		add_child(_sound)
+
+
+## v1.1: the Blender-modelled panel (pressed recesses, window surround, kick plate, rivets,
+## pull bar) and bolted steel frame replace the boxes' meshes; same nodes, same sizes, the
+## collider is untouched. Authored at 1.6 x 2.4, scaled to this door's width/height.
+func _v11_meshes(t: float, frame_mat: Material, panel_mat: Material) -> void:
+	var pm := GfxAssets.mesh("door_panel")
+	var jm := GfxAssets.mesh("door_jamb")
+	var hm := GfxAssets.mesh("door_header")
+	if pm == null or jm == null or hm == null:
+		return
+	var mesh_node := _panel.get_node("Mesh") as MeshInstance3D
+	mesh_node.mesh = pm
+	mesh_node.position = Vector3.ZERO
+	mesh_node.scale = Vector3(width / 1.6, height / 2.4, 1.0)
+	mesh_node.material_override = GfxAssets.material(panel_mat, "door_panel")
+	GfxAssets.shadow_proxy(mesh_node, _panel, Vector3(width, height, 0.12), Vector3(0, height / 2, 0))
+	var stripe := _panel.get_node("Stripe") as MeshInstance3D
+	(stripe.mesh as BoxMesh).size.z = 0.122
+	var fm_j := GfxAssets.material(frame_mat, "door_jamb")
+	for side in [-1.0, 1.0]:
+		var f := get_node("_genFrameL" if side < 0 else "_genFrameR") as MeshInstance3D
+		f.mesh = jm
+		f.position = Vector3(side * (width / 2 + t / 2), 0, 0)
+		f.rotation.y = 0.0 if side < 0 else PI
+		f.scale = Vector3(1, height + t, 1)
+		f.material_override = fm_j
+		f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # set in the wall; the wall casts
+	var top := get_node("_genFrameT") as MeshInstance3D
+	top.mesh = hm
+	top.scale = Vector3(width + 2 * t, 1, 1)
+	top.material_override = GfxAssets.material(frame_mat, "door_header")
+	top.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func _mesh(parent: Node3D, n: String, size: Vector3, pos: Vector3, mat: Material) -> MeshInstance3D:

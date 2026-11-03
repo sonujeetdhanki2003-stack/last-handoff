@@ -17,6 +17,11 @@ static func get_note(id: String) -> Dictionary:
 				"title": "SECURITY MEMO  -  14 MARCH",
 				"body": "To all night staff:\n\nLab 3 access code has been rotated after the incident.\nNew code:  [b]%s[/b]\n\nDo NOT write this down.\n(Yes, I know. Burn this after reading.)\n\n- R. Okafor, Station Security" % GameState.lab_code,
 			}
+		"lift_log":   # v1.2: the winch room (flag doc_lift_log)
+			return {
+				"title": "LIFT WINCH  -  ENGINEER'S LOG",
+				"body": "B2 hoist, Halden Deep. Engineer on duty: T. Lindqvist.\n\n02 MAR   Drum brake relined. Rope inspected, 4 broken wires, within limit.\n09 MAR   Counterweight rides 6 cm low. Re-shimmed the guide shoes.\n14 MAR   Cage called to B2 with nobody at the call box. Twice. Contacts dry.\n15 MAR   Called down again at 03:10. I went down to look. The gate was open.\n           Station security says the cameras show nobody. Logged as a fault.\n17 MAR   Rope tension is wrong. The motor log says the cage came UP loaded\n           at 03:40 and I was the only one on shift.\n\n[i]The last entry is in different ink, pressed hard into the page:[/i]\n\n           ONE PERSON PER TRIP. THAT'S THE RULE.\n           I DON'T KNOW WHO MADE IT.",
+			}
 		"doc_relay_card":
 			return {
 				"title": "RELAY PROGRAMME  -  BRIEFING CARD",

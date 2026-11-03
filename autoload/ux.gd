@@ -4,12 +4,19 @@ extends Node
 ## subtitles/captions and the expedition title card.
 
 signal device_changed(pad: bool)
+signal app_backgrounded
+signal app_foregrounded
 signal subtitle_shown(kind: String, speaker: String, text: String)
 signal title_card_done
 
 var last_title := ""
 
 var using_pad := false
+var using_touch := false          ## last input was a finger (prompts show the on-screen button names)
+var in_background := false        ## window lost focus / app paused (Android home, alt-tab)
+var _bg_paused_tree := false
+var _synthetic_esc := 0
+var safe_override := Rect2()      ## tests: pretend the screen has this safe area (viewport units)
 var _fade_layer: CanvasLayer
 var _fade: ColorRect
 var _sub_layer: CanvasLayer
@@ -36,6 +43,9 @@ const UI_SOUNDS := {
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().root.theme = UIKit.make_theme()
+	Input.joy_connection_changed.connect(_on_joy_connection)
+	# a phone starts with its fingers: show the touch button names from the first frame
+	using_touch = (OS.has_feature("mobile") and DisplayServer.is_touchscreen_available()) or Harness.has("touch")
 	for i in 3:
 		var p := AudioStreamPlayer.new()
 		p.bus = &"SFX"
@@ -63,6 +73,23 @@ func _ready() -> void:
 
 
 func _input(e: InputEvent) -> void:
+	if _synthetic_esc > 0 and e is InputEventKey and e.keycode == KEY_ESCAPE:
+		_synthetic_esc -= 1
+		return
+	var touch := using_touch
+	if e is InputEventScreenTouch or e is InputEventScreenDrag:
+		touch = true
+	elif e is InputEventJoypadButton or (e is InputEventKey and e.pressed):
+		touch = false
+	elif e is InputEventMouseButton and e.pressed and e.device != InputEvent.DEVICE_ID_EMULATION:
+		touch = false
+	if touch != using_touch:
+		using_touch = touch
+		if touch:
+			using_pad = false
+		device_changed.emit(using_pad)
+	if e.device == InputEvent.DEVICE_ID_EMULATION or e is InputEventScreenTouch or e is InputEventScreenDrag:
+		return   # a finger (or the back button) posing as a mouse/key: not a keyboard/mouse player
 	var pad := using_pad
 	if e is InputEventJoypadButton and e.pressed:
 		pad = true
@@ -77,9 +104,167 @@ func _input(e: InputEvent) -> void:
 		device_changed.emit(pad)
 
 
-## Prompt text for an action on the current device, e.g. "E" or "A".
+## Prompt text for an action on the current device, e.g. "E" or "A" (or "USE" on a touchscreen).
 func glyph(action: String) -> String:
+	if using_touch and TOUCH_LABELS.has(action):
+		return TOUCH_LABELS[action]
 	return Settings.action_label(action, using_pad)
+
+
+## The on-screen button that does each action (TouchControls).
+const TOUCH_LABELS := {"interact": "USE", "flashlight": "LIGHT", "crouch": "CROUCH", "sprint": "RUN",
+	"inventory": "BAG", "pause": "II", "reload_battery": "CELL", "ui_cancel": "BACK", "ui_accept": "TAP",
+	"ui_use": "USE", "ui_drop": "DROP", "show_objective": "OBJ", "skip": "TAP"}
+
+
+# ------------------------------------------------------------------ safe area
+## Screen-edge insets (notch, rounded corners, gesture bar) in viewport units:
+## Vector4(left, top, right, bottom). Zero on desktop.
+func safe_margins(vp: Viewport = null) -> Vector4:
+	if vp == null:
+		vp = get_viewport()
+	var vs := vp.get_visible_rect().size
+	if safe_override.size != Vector2.ZERO:
+		var r := safe_override
+		return Vector4(r.position.x, r.position.y, maxf(vs.x - r.end.x, 0.0), maxf(vs.y - r.end.y, 0.0))
+	if DisplayServer.get_name() == "headless" or not OS.has_feature("mobile"):
+		return Vector4.ZERO
+	# polled by the HUD and touch overlay: re-read the display at most twice a second
+	var now := Time.get_ticks_msec()
+	if now - _safe_read_ms < 500 and vs == _safe_read_vs:
+		return _safe_cached
+	_safe_read_ms = now
+	_safe_read_vs = vs
+	_safe_cached = _read_safe(vs)
+	return _safe_cached
+
+
+var _safe_read_ms := -100000
+var _safe_read_vs := Vector2.ZERO
+var _safe_cached := Vector4.ZERO
+
+
+func _read_safe(vs: Vector2) -> Vector4:
+	var win := Vector2(DisplayServer.window_get_size())
+	var safe := DisplayServer.get_display_safe_area()
+	if win.x <= 0 or win.y <= 0 or safe.size.x <= 0 or safe.size.y <= 0:
+		return Vector4.ZERO
+	var k := vs / win
+	var l := maxf(float(safe.position.x), 0.0) * k.x
+	var t := maxf(float(safe.position.y), 0.0) * k.y
+	var r2 := maxf(win.x - float(safe.end.x), 0.0) * k.x
+	var b := maxf(win.y - float(safe.end.y), 0.0) * k.y
+	return Vector4(minf(l, vs.x * 0.2), minf(t, vs.y * 0.2), minf(r2, vs.x * 0.2), minf(b, vs.y * 0.2))
+
+
+## Fit a full-screen CanvasLayer inside the safe area (uniform scale, centred in it).
+func fit_layer_to_safe_area(layer: CanvasLayer) -> void:
+	var m := safe_margins(layer.get_viewport())
+	var vs := layer.get_viewport().get_visible_rect().size
+	if m == Vector4.ZERO or vs.x <= 0:
+		layer.offset = Vector2.ZERO
+		layer.scale = Vector2.ONE
+		return
+	var avail := Vector2(vs.x - m.x - m.z, vs.y - m.y - m.w)
+	var s := minf(avail.x / vs.x, avail.y / vs.y)
+	layer.scale = Vector2(s, s)
+	layer.offset = Vector2(m.x, m.y) + (avail - vs * s) * 0.5
+
+
+# ------------------------------------------------------------------ app lifecycle
+## Focus lost / app sent to the background (Android home or recent apps, a call,
+## alt-tab on desktop): pause the game, silence audio, save the run. The Android
+## back button acts like Esc (closes the open panel, opens the pause menu).
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED:
+			app_background(what == NOTIFICATION_APPLICATION_PAUSED)
+		NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_APPLICATION_RESUMED:
+			app_foreground()
+		NOTIFICATION_WM_CLOSE_REQUEST:
+			_autosave()
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			go_back()
+
+
+func _lifecycle_enabled() -> bool:
+	# screenshot / benchmark automation under a virtual display must not pause itself
+	return not (Harness.has("shot") or Harness.has("nolifecycle"))
+
+
+func app_background(save := true) -> void:
+	if not _lifecycle_enabled():
+		return
+	if save:
+		_autosave()
+	if in_background:
+		return
+	in_background = true
+	AudioServer.set_bus_mute(0, true)
+	if open_pause_menu():
+		pass   # stays open when they come back; they choose when to resume
+	elif not get_tree().paused:
+		get_tree().paused = true
+		_bg_paused_tree = true
+	app_backgrounded.emit()
+
+
+func _game() -> Node:
+	var g := get_tree().get_first_node_in_group("game")
+	return g if g else get_tree().current_scene
+
+
+## Opens the in-game pause menu if an expedition is being played right now.
+func open_pause_menu() -> bool:
+	var sc := _game()
+	var pm: Node = sc.get_node_or_null("PauseMenu") if sc else null
+	var playing := pm != null and pm.has_method("open") and not get_tree().paused and not Events.modal_open \
+			and not bool(sc.get("ended")) and sc.get("player") != null and bool(sc.player.control_enabled)
+	if playing:
+		pm.open()
+	return playing
+
+
+## A controller unplugged (or its battery died) mid-run: drop any held stick/trigger
+## input so the member doesn't keep walking, and pause if it was the device in use.
+func _on_joy_connection(device: int, connected: bool) -> void:
+	if connected:
+		return
+	for a in ["move_forward", "move_back", "move_left", "move_right", "sprint", "crouch", "interact"]:
+		if InputMap.has_action(a):
+			Input.action_release(a)
+	if using_pad and Input.get_connected_joypads().is_empty():
+		open_pause_menu()
+		using_pad = false
+		device_changed.emit(false)
+
+
+func app_foreground() -> void:
+	if not in_background:
+		return
+	in_background = false
+	Settings._apply_one("audio", "master")   # restores the player's own mute/volume
+	if _bg_paused_tree:
+		_bg_paused_tree = false
+		get_tree().paused = false
+	app_foregrounded.emit()
+
+
+func _autosave() -> void:
+	var sc := _game()
+	if sc and sc.has_method("autosave"):
+		sc.autosave()
+
+
+## Android back button = Esc: every screen already closes on Esc, and Esc in play opens the pause menu.
+func go_back() -> void:
+	for pressed in [true, false]:
+		var k := InputEventKey.new()
+		k.keycode = KEY_ESCAPE
+		k.physical_keycode = KEY_ESCAPE
+		k.pressed = pressed
+		Input.parse_input_event(k)
+	_synthetic_esc = 2   # the press and release above are not a real keyboard: keep touch prompts
 
 
 # ------------------------------------------------------------------ sounds

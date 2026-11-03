@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bsbh2wttn334i"
 path.s3tc="res://.godot/imported/painted_concrete_02_rough.jpg-b6ed80c73ecf7d386dddb5fe47dc1b81.s3tc.ctex"
+path.etc2="res://.godot/imported/painted_concrete_02_rough.jpg-b6ed80c73ecf7d386dddb5fe47dc1b81.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/painted_concrete_02_rough.jpg"
-dest_files=["res://.godot/imported/painted_concrete_02_rough.jpg-b6ed80c73ecf7d386dddb5fe47dc1b81.s3tc.ctex"]
+dest_files=["res://.godot/imported/painted_concrete_02_rough.jpg-b6ed80c73ecf7d386dddb5fe47dc1b81.s3tc.ctex", "res://.godot/imported/painted_concrete_02_rough.jpg-b6ed80c73ecf7d386dddb5fe47dc1b81.etc2.ctex"]
 
 [params]
 

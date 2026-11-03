@@ -22,6 +22,7 @@ var pool_radius := 0.0      ## floor radius this light keeps the Keeper out of (
 
 func _ready() -> void:
 	_rng.randomize()
+	GfxUpgrade.fixture(self)   # v1.1 Blender batten fixture over the primitive one
 	for n in find_children("*", "Light3D", true, false):
 		_lights.append(n)
 		_energies.append(n.light_energy)
@@ -92,9 +93,33 @@ func covers(pos: Vector3) -> bool:
 func suppress(seconds: float, warn := 1.2) -> bool:
 	if suppress_cooldown > 0.0 or not _on:
 		return false
+	if browning and _brown_tw:   # the real cue always wins over a fake-out
+		_brown_tw.kill()
+		browning = false
 	_warn_t = warn
 	_suppress_t = seconds + warn
 	suppress_cooldown = seconds + warn + 12.0
+	return true
+
+
+## v1.2 fake-out: a brownout. One lamp sags, buzzes and comes back over ~1.5 s, slower
+## than the fast stutter the Keeper causes. Visual only: covers() is unchanged.
+var browning := false
+var _brown_tw: Tween
+func brownout() -> bool:
+	if not _on or _suppress_t > 0.0 or browning:
+		return false
+	browning = true
+	var tw := create_tween()
+	_brown_tw = tw
+	tw.tween_method(_apply, 1.0, 0.3, 0.35)
+	tw.tween_method(_apply, 0.3, 0.45, 0.12)
+	tw.tween_method(_apply, 0.45, 0.15, 0.3)
+	tw.tween_interval(0.25)
+	tw.tween_method(_apply, 0.15, 1.0, 0.5)
+	tw.tween_callback(func():
+		browning = false
+		_apply(1.0 if _on and _suppress_t <= 0.0 else (0.0 if not _on else 1.0)))
 	return true
 
 
@@ -122,7 +147,7 @@ func _process(delta: float) -> void:
 		if _suppress_t <= 0.0:
 			_apply(1.0 if _on else 0.0)
 		return
-	if not _on or flicker <= 0.0:
+	if not _on or flicker <= 0.0 or browning:
 		return
 	_flick_t -= delta
 	if _flick_t <= 0.0:

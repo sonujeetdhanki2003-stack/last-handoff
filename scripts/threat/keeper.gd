@@ -22,10 +22,10 @@ extends CharacterBody3D
 signal state_changed(state: int)
 signal caught_player(fatal: bool)
 
-enum S { DORMANT, PATROL, INVESTIGATE, CHASE, SEARCH, REPELLED, RETREAT, WAIT_LIGHT, GRAB }
-const NAMES := ["dormant", "patrol", "investigate", "chase", "search", "repelled", "retreat", "wait_light", "grab"]
+enum S { DORMANT, PATROL, INVESTIGATE, CHASE, SEARCH, REPELLED, RETREAT, WAIT_LIGHT, GRAB, LUNGE }
+const NAMES := ["dormant", "patrol", "investigate", "chase", "search", "repelled", "retreat", "wait_light", "grab", "lunge"]
 
-const SPEED := {S.PATROL: 1.25, S.INVESTIGATE: 2.0, S.CHASE: 3.6, S.SEARCH: 1.6, S.RETREAT: 3.2}
+const SPEED := {S.PATROL: 1.25, S.INVESTIGATE: 2.0, S.CHASE: 3.4, S.SEARCH: 1.6, S.RETREAT: 3.2}   # Phase 6: chase 3.6 -> 3.4
 const SIGHT_DARK := 7.0
 const SIGHT_LIGHT := 18.0
 const SIGHT_CROUCH := 4.5
@@ -38,8 +38,23 @@ const REPEL_BEAM_TIME := 0.6
 const REPEL_RANGE := 10.0
 const REPEL_COST := 0.12
 const WAKE_AFTER := 240.0
-const SEEN_HIDING_RANGE := 7.0   ## balance pass (was 10): it has to be close to see which locker
+const SEEN_HIDING_RANGE := 5.0   ## Phase 6 (was 7, 10 before that): it has to be close to see which locker
 const CHASE_WINDUP := 0.55     ## balance pass: a head start the moment it spots you
+## Phase 6 fairness: it never strikes from a run. In reach it stops, rears back and
+## screams (the telegraph), then lunges along a straight line. A player who keeps
+## running or steps aside makes it miss, and a miss leaves it staggering.
+const LUNGE_RANGE := 2.1
+const LUNGE_TELEGRAPH := 0.5
+const LUNGE_TIME := 0.3
+const LUNGE_SPEED := 7.0
+const LUNGE_HIT := 1.0
+const LUNGE_RECOVER := 1.0
+## A fresh chase starts slower and builds up to full speed.
+const CHASE_START_SPEED := 2.3
+const CHASE_RAMP := 3.0
+var _lunge_dir := Vector3.FORWARD
+var _lunge_hit := false
+var _chase_ramp_t := 99.0
 var _windup := 0.0
 
 var state := S.DORMANT
@@ -111,32 +126,38 @@ func setup(p: Player, points: Array) -> void:
 
 
 func _build_visual() -> void:
-	_model = load("res://assets/characters/explorer/Explorer.gltf").instantiate()
+	# Phase 6: one continuous skinned creature mesh (assets/characters/keeper/Keeper.gltf),
+	# sculpted from the CC0 Quaternius base body by tools/sculpt_keeper.py: stretched,
+	# gaunt limbs with knobbed joints, a shrunken belly under a ribcage, a long neck and a
+	# smooth faceless skull; the torn coverall is a cloth layer skinned to the same rig.
+	_model = load("res://assets/characters/keeper/Keeper.gltf").instantiate()
 	_model.name = "Model"
 	_model.rotation = Vector3(0.0, PI, 0.0)
 	add_child(_model)
 	var skel := _model.find_child("GeneralSkeleton", true, false) as Skeleton3D
-	for mi in _model.find_children("*", "MeshInstance3D", true, false):
-		mi.get_parent().remove_child(mi)
-		mi.queue_free()
+	# v1.1: the Keeper's own clips, keyframed in Blender (tools/keeper_anim/), driven by an
+	# AnimationTree from the AI state below. The pose layer (keeper_poser.gd) now only aims the head.
 	_anim = AnimationPlayer.new()
 	_anim.name = "AnimationPlayer"
 	_model.add_child(_anim)
-	_anim.add_animation_library("", load("res://assets/characters/ual_animations.res"))
+	_anim.add_animation_library("", load(CLIP_LIBRARY))
+	_build_tree()
 	if skel == null:
 		return
-	KeeperBody.stretch(skel)
-	var built := KeeperBody.build(skel, _skin_material(), _rag_material())
-	for idx in 2:
-		var mi := MeshInstance3D.new()
-		mi.name = "Body" if idx == 0 else "Rags"
-		mi.mesh = built[idx]
-		mi.skin = built[2]
-		skel.add_child(mi)
-		mi.skeleton = mi.get_path_to(skel)
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for mi in _model.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.name.begins_with("KeeperBody"):
+			m.name = "Body"
+			m.material_override = _skin_material()
+		elif m.name.begins_with("KeeperRags"):
+			m.name = "Rags"
+			m.set_surface_override_material(0, _rag_material())
+			if m.mesh.get_surface_count() > 1:
+				m.set_surface_override_material(1, _strip_material())
+		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	poser = KeeperPoser.new()
 	poser.name = "Poser"
+	poser.clip_mode = true
 	skel.add_child(poser)
 	# the helmet it came down in, fused to the skull: cracked shell, dead lamp
 	var ba := BoneAttachment3D.new()
@@ -144,63 +165,227 @@ func _build_visual() -> void:
 	skel.add_child(ba)
 	var hm := Node3D.new()
 	hm.name = "FusedHelmet"
-	hm.position = Vector3(0.0, 0.2, -0.01)
-	hm.rotation = Vector3(-0.5, 0.0, 0.32)
+	hm.position = Vector3(0.0, 0.135, -0.04)
+	hm.rotation = Vector3(-0.55, 0.0, 0.18)
 	ba.add_child(hm)
-	var shell_m := StandardMaterial3D.new()
-	shell_m.albedo_color = Color(0.42, 0.37, 0.28)
-	shell_m.roughness = 0.7
-	shell_m.albedo_texture = _noise_tex(0.09, false)
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0.04, 0.035, 0.03)
-	dark.roughness = 0.6
-	var shell := SphereMesh.new()
-	shell.radius = 0.13
-	shell.height = 0.17
-	shell.is_hemisphere = true
-	shell.radial_segments = 24
-	shell.rings = 8
-	_part(hm, shell, shell_m, Vector3.ZERO, Vector3(0.95, 1.0, 1.1))
-	var brim := CylinderMesh.new()
-	brim.top_radius = 0.138
-	brim.bottom_radius = 0.138
-	brim.height = 0.016
-	brim.radial_segments = 24
-	_part(hm, brim, dark, Vector3(0, 0.002, 0), Vector3(0.95, 1.0, 1.1))
-	var lamp := CylinderMesh.new()
-	lamp.top_radius = 0.022
-	lamp.bottom_radius = 0.024
-	lamp.height = 0.04
-	var lamp_mi := _part(hm, lamp, dark, Vector3(0.0, 0.06, 0.14), Vector3.ONE)
-	lamp_mi.rotation.x = PI / 2
-	var crack := BoxMesh.new()
-	crack.size = Vector3(0.012, 0.004, 0.16)
-	var crack_mi := _part(hm, crack, dark, Vector3(0.05, 0.115, 0.0), Vector3.ONE)
-	crack_mi.rotation = Vector3(0.0, 0.5, -0.4)
-	# where it grew into the skin: lumps of flesh over the brim
-	for kk in 5:
-		var lump := SphereMesh.new()
-		lump.radius = 0.03
-		lump.height = 0.05
-		var a := -0.9 + kk * 0.45
-		_part(hm, lump, _skin_material(), Vector3(sin(a) * 0.125, -0.005, cos(a) * 0.135 - 0.02), Vector3(1.4, 0.8, 1.0))
+	var helmet_v11: Mesh = GfxAssets.mesh("res://assets/characters/keeper/KeeperHelmet.glb")
+	if helmet_v11:
+		# v1.1: the Blender helmet (tools/gfx_blender/keeper_helmet.py): cracked shell, dents,
+		# chipped paint, a dead lamp; normal/AO/colour baked from a sculpted high mesh
+		var hmi := MeshInstance3D.new()
+		hmi.name = "HelmetV11"
+		hmi.mesh = helmet_v11
+		hmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		hm.add_child(hmi)
+	else:
+		_primitive_helmet(hm)
+	# where it grew into the skin: ridges of flesh swallowing the brim
+	var collar := TorusMesh.new()
+	collar.inner_radius = 0.07
+	collar.outer_radius = 0.104
+	collar.rings = 24
+	collar.ring_segments = 10
+	_part(hm, collar, _skin_material(), Vector3(0, -0.006, 0), Vector3(0.95, 0.55, 1.15))
 	# pale glints under the brim: the fair warning. No face to go with them.
 	_eye_mat = StandardMaterial3D.new()
 	_eye_mat.albedo_color = Color(0.7, 0.8, 0.85)
 	_eye_mat.emission_enabled = true
 	_eye_mat.emission = Color(0.75, 0.88, 1.0)
-	_eye_mat.emission_energy_multiplier = 3.0
+	_eye_mat.emission_energy_multiplier = 1.6
 	_eye_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	for sx in [-1.0, 1.0]:
 		var e := MeshInstance3D.new()
 		var sm := SphereMesh.new()
-		sm.radius = 0.011
-		sm.height = 0.016
+		sm.radius = 0.0055
+		sm.height = 0.008
 		e.mesh = sm
 		e.material_override = _eye_mat
-		e.position = Vector3(0.03 * sx, 0.12, 0.1)
+		e.position = Vector3(0.027 * sx, 0.105, 0.062)
 		ba.add_child(e)
 		_eyes.append(e)
+
+
+func _primitive_helmet(hm: Node3D) -> void:
+	var shell_m := StandardMaterial3D.new()
+	shell_m.albedo_color = Color(0.3, 0.25, 0.16)
+	shell_m.roughness = 0.75
+	shell_m.roughness_texture = _noise_tex(0.12, false)
+	shell_m.normal_enabled = true
+	shell_m.normal_texture = _noise_tex(0.05, true)
+	shell_m.normal_scale = 0.25
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.04, 0.035, 0.03)
+	dark.roughness = 0.6
+	var shell := SphereMesh.new()
+	shell.radius = 0.094
+	shell.height = 0.17
+	shell.is_hemisphere = true
+	shell.radial_segments = 28
+	shell.rings = 10
+	_part(hm, shell, shell_m, Vector3.ZERO, Vector3(0.95, 1.0, 1.15))
+	var brim := CylinderMesh.new()
+	brim.top_radius = 0.099
+	brim.bottom_radius = 0.101
+	brim.height = 0.014
+	brim.radial_segments = 28
+	_part(hm, brim, dark, Vector3(0, 0.002, 0), Vector3(0.95, 1.0, 1.15))
+	var ridge := BoxMesh.new()
+	ridge.size = Vector3(0.02, 0.016, 0.2)
+	_part(hm, ridge, shell_m, Vector3(0, 0.083, 0), Vector3.ONE)
+	var lamp := CylinderMesh.new()
+	lamp.top_radius = 0.02
+	lamp.bottom_radius = 0.022
+	lamp.height = 0.035
+	var lamp_mi := _part(hm, lamp, dark, Vector3(0.0, 0.045, 0.1), Vector3.ONE)
+	lamp_mi.rotation.x = PI / 2 - 0.35
+	var crack := BoxMesh.new()
+	crack.size = Vector3(0.01, 0.004, 0.13)
+	var crack_mi := _part(hm, crack, dark, Vector3(0.04, 0.088, 0.0), Vector3.ONE)
+	crack_mi.rotation = Vector3(0.0, 0.5, -0.45)
+
+
+# ------------------------------------------------------------------ animation (v1.1)
+const CLIP_LIBRARY := "res://assets/characters/keeper/keeper_anims.res"
+## every clip the AI can ask for (all made in Blender, see tools/keeper_anim/build_clips.py)
+const CLIPS := ["kp_idle", "kp_idle_head", "kp_idle_fingers", "kp_stalk", "kp_run", "kp_crawl", "kp_scream",
+	"kp_lunge", "kp_stagger", "kp_grab", "kp_vent_drop", "kp_search", "kp_recoil"]
+## ground speed (m/s) each locomotion clip was keyed at: playback is scaled by velocity / this,
+## so the planted feet move with the floor instead of skating
+const NATIVE_SPEED := {"kp_stalk": 1.25, "kp_run": 3.4, "kp_crawl": 1.2}
+## cross-fade into a clip (s); everything else uses XFADE
+const XFADE := 0.22
+const XFADE_IN := {"kp_scream": 0.06, "kp_lunge": 0.04, "kp_stagger": 0.1, "kp_recoil": 0.06,
+	"kp_vent_drop": 0.0, "kp_grab": 0.08, "kp_idle_head": 0.12, "kp_idle_fingers": 0.2}
+## upper body for the strike one-shot (claws while it scuttles off)
+const STRIKE_BONES := ["Spine", "Chest", "UpperChest", "Neck", "Head", "LeftShoulder", "LeftUpperArm",
+	"LeftLowerArm", "LeftHand", "RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand"]
+var tree: AnimationTree
+var clip := ""                     ## the clip the tree is on (or fading to)
+var _clip_t := 0.0                 ## seconds since that clip was requested
+var _hold := ""                    ## a one-shot that plays out before the state picks again
+var _hold_until := 0.0
+var _idle_var_t := 3.0
+
+
+func _build_tree() -> void:
+	var bt := AnimationNodeBlendTree.new()
+	var tr := AnimationNodeTransition.new()
+	tr.xfade_time = XFADE
+	tr.allow_transition_to_self = false
+	for i in CLIPS.size():
+		tr.add_input(CLIPS[i])
+		var an := AnimationNodeAnimation.new()
+		an.animation = StringName(CLIPS[i])
+		bt.add_node(StringName(CLIPS[i]), an, Vector2(0, i * 80))
+	bt.add_node(&"state", tr, Vector2(300, 400))
+	for i in CLIPS.size():
+		tr.set_input_reset(i, true)
+		bt.connect_node(&"state", i, StringName(CLIPS[i]))
+	var ts := AnimationNodeTimeScale.new()
+	bt.add_node(&"speed", ts, Vector2(500, 400))
+	bt.connect_node(&"speed", 0, &"state")
+	var os := AnimationNodeOneShot.new()
+	os.fadein_time = 0.06
+	os.fadeout_time = 0.25
+	os.filter_enabled = true
+	for b in STRIKE_BONES:
+		os.set_filter_path(NodePath("%GeneralSkeleton:" + b), true)
+	for s in ["Left", "Right"]:
+		for f in ["Index", "Middle", "Ring", "Little"]:
+			for seg in ["Proximal", "Intermediate", "Distal"]:
+				os.set_filter_path(NodePath("%GeneralSkeleton:" + s + f + seg), true)
+	bt.add_node(&"strike", os, Vector2(700, 400))
+	var sa := AnimationNodeAnimation.new()
+	sa.animation = &"kp_grab"
+	bt.add_node(&"strike_clip", sa, Vector2(500, 600))
+	bt.connect_node(&"strike", 0, &"speed")
+	bt.connect_node(&"strike", 1, &"strike_clip")
+	bt.connect_node(&"output", 0, &"strike")
+	tree = AnimationTree.new()
+	tree.name = "AnimationTree"
+	tree.tree_root = bt
+	_model.add_child(tree)
+	tree.anim_player = tree.get_path_to(_anim)
+	tree.root_node = tree.get_path_to(_model)
+	tree.active = true
+	play_clip("kp_search")
+
+
+## Ask the tree for a clip (cross-faded). Returns true if it changed.
+func play_clip(c: String, xfade := -1.0) -> bool:
+	if tree == null or c == clip:
+		return false
+	var tr := (tree.tree_root as AnimationNodeBlendTree).get_node(&"state") as AnimationNodeTransition
+	tr.xfade_time = xfade if xfade >= 0.0 else float(XFADE_IN.get(c, XFADE))
+	tree.set("parameters/state/transition_request", c)
+	clip = c
+	_clip_t = 0.0
+	return true
+
+
+## Play a one-shot clip to its end (vent drop, strike...) before the state machine picks again.
+func hold_clip(c: String, seconds: float, xfade := -1.0) -> void:
+	play_clip(c, xfade)
+	_hold = c
+	_hold_until = _time + seconds
+
+
+## The strike: an upper-body grab/rake layered over whatever the legs are doing.
+func strike_anim() -> void:
+	if tree:
+		tree.set("parameters/strike/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+
+
+## Freeze on one frame of a clip (look-dev renders, tests): the tree steps aside.
+func pose_clip(c: String, t: float) -> void:
+	if tree:
+		tree.active = false
+	_anim.play(c)
+	_anim.seek(t, true)
+	_anim.pause()
+	clip = c
+
+
+func clip_speed() -> float:
+	return float(tree.get("parameters/speed/scale")) if tree else 1.0
+
+
+## Which clip the AI state wants right now, and at what playback speed.
+func _pick_clip(v: float) -> Array:
+	var c := "kp_idle"
+	var sp := 1.0
+	match state:
+		S.DORMANT:
+			c = "kp_search"
+			sp = 0.35
+		S.PATROL:
+			c = "kp_stalk" if v > 0.3 else "kp_idle"
+		S.INVESTIGATE:
+			c = "kp_stalk" if v > 0.3 else "kp_search"
+		S.SEARCH:
+			c = "kp_crawl" if v > 0.3 else "kp_search"
+		S.CHASE:
+			if _windup > 0.0:
+				c = "kp_scream"
+			elif v > 1.0:
+				c = "kp_run"
+			elif v > 0.3:
+				c = "kp_stalk"
+			else:
+				c = "kp_idle"
+		S.LUNGE:
+			c = {"telegraph": "kp_scream", "lunge": "kp_lunge", "recover": "kp_stagger"}.get(lunge_phase(), "kp_idle")
+		S.REPELLED:
+			c = "kp_recoil"
+		S.RETREAT:
+			c = "kp_crawl" if v > 0.3 else "kp_idle"
+		S.WAIT_LIGHT:
+			c = "kp_idle"
+		S.GRAB:
+			c = "kp_grab"
+	if NATIVE_SPEED.has(c) and v > 0.3:
+		sp = clampf(v / float(NATIVE_SPEED[c]), 0.4, 2.7)
+	return [c, sp]
 
 
 var poser: KeeperPoser
@@ -224,33 +409,64 @@ static func _noise_tex(freq: float, normal: bool) -> NoiseTexture2D:
 
 static func _skin_material() -> StandardMaterial3D:
 	if _skin_mat == null:
+		var d := "res://assets/characters/keeper/"
 		_skin_mat = StandardMaterial3D.new()
-		_skin_mat.albedo_color = Color(0.2, 0.185, 0.165)
-		_skin_mat.albedo_texture = _noise_tex(0.05, false)
-		_skin_mat.roughness = 0.58          # damp skin, like something that came out of the tank
-		_skin_mat.metallic_specular = 0.35
-		_skin_mat.roughness_texture = _noise_tex(0.11, false)
-		_skin_mat.normal_enabled = false
-		_skin_mat.normal_texture = _noise_tex(0.08, true)
-		_skin_mat.normal_scale = 0.45
-		_skin_mat.uv1_scale = Vector3(1.5, 1.5, 1.5)
+		var v11 := GfxAssets.enabled() and ResourceLoader.exists(d + "T_Keeper_Normal_v11.png")
+		_skin_mat.albedo_texture = load(d + ("T_Keeper_BaseColor_v11.png" if v11 else "T_Keeper_BaseColor.png"))
+		_skin_mat.albedo_color = Color(1.0, 1.0, 1.0)
+		_skin_mat.normal_enabled = true
+		_skin_mat.normal_texture = load(d + ("T_Keeper_Normal_v11.png" if v11 else "T_Keeper_Normal.png"))
+		_skin_mat.normal_scale = 1.15
+		if v11:
+			# v1.1: sculpted in Blender (tools/gfx_blender/keeper_sculpt_bake.py): baked AO
+			_skin_mat.ao_enabled = true
+			_skin_mat.ao_texture = load(d + "T_Keeper_ORM_v11.png")
+			_skin_mat.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+			_skin_mat.ao_light_affect = 0.5
+		_skin_mat.roughness_texture = load(d + "T_Keeper_Roughness.png")
+		_skin_mat.roughness = 1.0
+		_skin_mat.metallic_specular = 0.32
+		# wet: a thin glossy film over matte, damp skin
+		_skin_mat.clearcoat_enabled = false
+		_skin_mat.clearcoat = 0.18
+		_skin_mat.clearcoat_roughness = 0.5
+		# a little light bleeds through the thin parts (Forward+ only; ignored elsewhere)
+		_skin_mat.subsurf_scatter_enabled = true
+		_skin_mat.subsurf_scatter_strength = 0.18
+		_skin_mat.subsurf_scatter_skin_mode = true
 		_skin_mat.rim_enabled = true
-		_skin_mat.rim = 0.45
-		_skin_mat.rim_tint = 0.5
+		_skin_mat.rim = 0.22
+		_skin_mat.rim_tint = 0.4
 		_skin_mat.emission_enabled = true
-		_skin_mat.emission = Color(0.03, 0.045, 0.05)
-		_skin_mat.emission_energy_multiplier = 0.3
+		_skin_mat.emission = Color(0.02, 0.03, 0.035)
+		_skin_mat.emission_energy_multiplier = 0.25
 	return _skin_mat
 
 
 static func _rag_material() -> StandardMaterial3D:
 	if _rag_mat == null:
+		var d := "res://assets/characters/keeper/"
 		_rag_mat = StandardMaterial3D.new()
-		_rag_mat.albedo_color = Color(0.36, 0.17, 0.08)   # what is left of a field coverall
-		_rag_mat.albedo_texture = _noise_tex(0.12, false)
-		_rag_mat.roughness = 0.92
+		_rag_mat.albedo_texture = load(d + "T_KeeperRag_BaseColor.png")
+		_rag_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		_rag_mat.alpha_scissor_threshold = 0.5
+		_rag_mat.alpha_antialiasing_mode = BaseMaterial3D.ALPHA_ANTIALIASING_OFF
+		_rag_mat.normal_enabled = true
+		_rag_mat.normal_texture = load(d + "T_KeeperRag_Normal.png")
+		_rag_mat.roughness = 0.88
 		_rag_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_rag_mat.rim_enabled = true
+		_rag_mat.rim = 0.2
+		_rag_mat.rim_tint = 0.6
 	return _rag_mat
+
+
+static var _strip_mat: StandardMaterial3D
+static func _strip_material() -> StandardMaterial3D:
+	if _strip_mat == null:
+		_strip_mat = _rag_material().duplicate()
+		_strip_mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	return _strip_mat
 
 
 func _part(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, scl: Vector3) -> MeshInstance3D:
@@ -314,13 +530,14 @@ func set_state(s: int, keep_target := false) -> void:
 	state = s
 	state_t = 0.0
 	if player and is_instance_valid(player):
-		player.threat_near = s in [S.CHASE, S.WAIT_LIGHT, S.GRAB]
+		player.threat_near = s in [S.CHASE, S.WAIT_LIGHT, S.GRAB, S.LUNGE]
 	match s:
 		S.CHASE:
 			lost_t = 0.0
 			if prev in [S.PATROL, S.INVESTIGATE, S.SEARCH, S.DORMANT]:
 				_windup = CHASE_WINDUP
-			if prev != S.WAIT_LIGHT:
+				_chase_ramp_t = 0.0
+			if prev not in [S.WAIT_LIGHT, S.LUNGE]:
 				_play_voice("keeper_alert", 2.0)
 				if prev != S.REPELLED:
 					Sfx.play("sting_spotted", -4.0)
@@ -372,6 +589,7 @@ func _vent_out() -> void:
 	# up into the Lab 3 ceiling duct: it climbs, reaching up, and is gone
 	_play_voice("keeper_crawl", -2.0)
 	var start := global_position
+	hold_clip("kp_crawl", 0.8 / vent_speed)
 	var ok := await _vent_phase(0.8, func(x: float):
 		global_position = start + Vector3.UP * 2.9 * x
 		_model.rotation.x = -x * 1.2
@@ -396,14 +614,14 @@ func _vent_out() -> void:
 	if ok:
 		Sfx.play_at("vent_bang", VENT_EXIT + Vector3.UP * 3.0)
 		# head first out of the corridor vent, arms down to the floor, then it unfolds
-		global_position = VENT_EXIT + Vector3.UP * 2.6
+		# v1.1: the drop is the Blender clip kp_vent_drop (it pours out head first, lands on its
+		# hands, freezes low and unfolds); its origin stays on the floor under the vent
+		global_position = VENT_EXIT
 		visible = true
-		_model.rotation.x = 1.25
-		ok = await _vent_phase(0.6, func(x: float):
-			global_position = VENT_EXIT + Vector3.UP * 2.6 * (1.0 - x * x)
-			if poser:
-				poser.crawl = 0.8
-				poser.reach = 1.0)
+		_model.rotation.x = 0.0
+		hold_clip("kp_vent_drop", 1.2 / vent_speed, 0.0)
+		ok = await _vent_phase(0.6, func(_x: float):
+			global_position = VENT_EXIT)
 	visible = true
 	if ok:
 		Sfx.play_at("keeper_drag", VENT_EXIT, -2.0)
@@ -536,6 +754,8 @@ func _think(delta: float) -> void:
 				set_state(S.PATROL)
 		S.CHASE:
 			_chase(delta)
+		S.LUNGE:
+			_lunge(delta)
 		S.WAIT_LIGHT:
 			_wait_light(delta)
 		S.REPELLED:
@@ -574,7 +794,11 @@ func _chase(delta: float) -> void:
 		var spot_pos: Vector3 = seen_hiding.call("outside_point")
 		agent.target_position = spot_pos
 		if global_position.distance_to(spot_pos) < 1.4:
-			_catch(true)
+			# Phase 6: it tears the door open and drags you out. At full health that is
+			# a strike you survive (the same rule as any first catch), not instant death.
+			seen_hiding.call("force_out", player)
+			seen_hiding = null
+			_catch(false)
 		return
 	if can_see_player():
 		last_seen = player.global_position
@@ -593,8 +817,47 @@ func _chase(delta: float) -> void:
 	if pool and d < 4.0 and not PoweredLight.pool_at(get_tree(), global_position):
 		_block_on(pool)
 		return
-	if d < CATCH_RANGE and can_see_player():
-		_catch(false)
+	if d < LUNGE_RANGE and can_see_player():
+		_start_lunge()
+
+
+func _start_lunge() -> void:
+	set_state(S.LUNGE)
+	_lunge_hit = false
+	look_at_flat(player.global_position)
+	_play_voice("keeper_scream", 3.0)
+	if player:
+		player.rumble(0.25, 0.4)
+
+
+## The telegraph, the lunge, the stagger. Returns to the chase after a miss.
+func _lunge(delta: float) -> void:
+	if state_t < LUNGE_TELEGRAPH:
+		if player:
+			var to := player.global_position - global_position
+			to.y = 0
+			# it turns to follow you while it rears back, but only so fast
+			look_at_flat(player.global_position, delta * 5.0)
+			_lunge_dir = (-global_transform.basis.z).normalized()
+		return
+	if state_t < LUNGE_TELEGRAPH + LUNGE_TIME:
+		if not _lunge_hit and player and not player.dead and player.hidden_in == null:
+			if global_position.distance_to(player.global_position) < LUNGE_HIT:
+				_lunge_hit = true
+				_catch(false)
+		return
+	if state_t > LUNGE_TELEGRAPH + LUNGE_TIME + LUNGE_RECOVER:
+		set_state(S.CHASE)
+
+
+func lunge_phase() -> String:
+	if state != S.LUNGE:
+		return ""
+	if state_t < LUNGE_TELEGRAPH:
+		return "telegraph"
+	if state_t < LUNGE_TELEGRAPH + LUNGE_TIME:
+		return "lunge"
+	return "recover"
 
 
 var _blocking_pool: PoweredLight
@@ -643,6 +906,7 @@ func _catch(fatal_override: bool) -> void:
 	else:
 		# it strikes, then lets go. It is keeping count.
 		_play_voice("keeper_strike", 3.0)
+		strike_anim()
 		player.hurt(55.0, "keeper")
 		var push := (player.global_position - global_position)
 		push.y = 0
@@ -682,7 +946,9 @@ func _check_beam(delta: float) -> void:
 		beam_t = 0.0
 		return
 	if is_in_beam():
-		beam_t += delta
+		# rearing up to lunge, it is wide open: light in its face then makes it flinch
+		# three times as fast (the "parry": turn and flash it when it screams)
+		beam_t += delta * (3.0 if state == S.LUNGE and lunge_phase() == "telegraph" else 1.0)
 		if beam_t >= REPEL_BEAM_TIME:
 			beam_t = 0.0
 			repel()
@@ -796,6 +1062,18 @@ func _move(delta: float) -> void:
 	if not _height_fixed:
 		_fix_height()
 	var spd: float = SPEED.get(state, 0.0) * speed_scale
+	if state == S.CHASE and _chase_ramp_t < CHASE_RAMP:
+		_chase_ramp_t += delta
+		spd = lerpf(CHASE_START_SPEED, SPEED[S.CHASE], clampf(_chase_ramp_t / CHASE_RAMP, 0.0, 1.0)) * speed_scale
+	if state == S.LUNGE:
+		var lv := Vector3.ZERO
+		if lunge_phase() == "lunge":
+			lv = _lunge_dir * LUNGE_SPEED
+		velocity.x = lv.x
+		velocity.z = lv.z
+		velocity.y = -0.3 if is_on_floor() else velocity.y - _gravity * delta
+		move_and_slide()
+		return
 	if _door_pause > 0.0:
 		_door_pause -= delta
 		spd = 0.0
@@ -875,64 +1153,46 @@ func _animate() -> void:
 	if _anim == null:
 		return
 	var v := Vector2(velocity.x, velocity.z).length()
-	var clip := "Idle"
-	var sp := 1.0
 	var dt := get_physics_process_delta_time()
-	# target pose layer for the creature: hunch, search sniffing, reaching, crawl
-	var want := {"hunch": 0.75, "search": 0.0, "reach": 0.0, "grab": 0.0, "shield": 0.0, "crawl": 0.0}
+	_clip_t += dt
 	var d := player.global_position.distance_to(global_position) if player and is_instance_valid(player) else 99.0
-	match state:
-		S.DORMANT:
-			clip = "Crouch_Idle"
-			sp = 0.3
-			want["hunch"] = 1.0
-			want["crawl"] = 0.35
-		S.REPELLED:
-			clip = "Hit_Chest"
-			want["shield"] = 1.0
-			want["hunch"] = 1.0
-		S.GRAB:
-			clip = "Idle"
-			want["reach"] = 1.0
-			want["grab"] = 1.0
-			want["hunch"] = 0.4
-		S.SEARCH:
-			clip = "Crouch_Fwd" if v > 0.3 else "Crouch_Idle"
-			sp = 0.75
-			want["search"] = 1.0
-			want["hunch"] = 1.0
-			want["crawl"] = 0.25
-		S.WAIT_LIGHT:
-			clip = "Idle"
-			sp = 0.6
-			want["hunch"] = 1.0
-			want["search"] = 0.35
-		S.RETREAT:
-			clip = "Sprint" if v > 2.5 else "Walk"
-			want["hunch"] = 1.0
-			want["crawl"] = 0.3
-		S.CHASE:
-			clip = "Jog_Fwd" if v > 2.5 else ("Walk" if v > 0.3 else "Idle")
-			sp = 0.95
-			want["hunch"] = 0.55
-			want["reach"] = 0.45 if d > 3.2 else 1.0     # the lunge: both arms out for you
-		S.INVESTIGATE:
-			clip = "Walk" if v > 0.3 else "Idle"
-			sp = 0.7
-			want["search"] = 0.5
-		_:
-			clip = "Walk" if v > 0.3 else "Idle"
-			sp = 0.62 if v > 0.3 else 0.5
-	if in_vent:
-		want = {}
-	if not _anim.has_animation(clip):
-		clip = "Idle"
-	if _anim.current_animation != clip:
-		_anim.play(clip, 0.3)
-	_anim.speed_scale = sp
+	var pick := _pick_clip(v)
+	var c: String = pick[0]
+	var sp: float = pick[1]
+	if _hold != "":
+		# a one-shot (vent drop) plays out unless the AI has something urgent to show
+		if _time < _hold_until and state not in [S.CHASE, S.LUNGE, S.REPELLED, S.GRAB]:
+			c = _hold
+			sp = vent_speed if _hold == "kp_vent_drop" else 1.0
+		else:
+			_hold = ""
+	elif c == "kp_idle" and state in [S.PATROL, S.WAIT_LIGHT, S.CHASE, S.RETREAT]:
+		# idle twitch variants: a head snap or a finger ripple every few seconds
+		_idle_var_t -= dt * (2.0 if state == S.WAIT_LIGHT else 1.0)
+		if clip in ["kp_idle_head", "kp_idle_fingers"] and _clip_t < 2.25:
+			c = clip
+		elif clip == "kp_idle" and _idle_var_t <= 0.0:
+			_idle_var_t = _rng.randf_range(2.5, 6.0)
+			c = "kp_idle_head" if _rng.randf() < 0.6 else "kp_idle_fingers"
+	play_clip(c)
+	if tree:
+		var cur := float(tree.get("parameters/speed/scale"))
+		tree.set("parameters/speed/scale", sp if absf(sp - cur) > 0.5 else move_toward(cur, sp, dt * 4.0))
 	if poser:
-		for key in want:
-			poser.set(key, move_toward(float(poser.get(key)), want[key], dt * 3.0))
+		# the procedural layer only aims the head at you, on top of the clips
+		var look := 0.0
+		if player and is_instance_valid(player) and not in_vent and _hold == "":
+			match state:
+				S.CHASE, S.WAIT_LIGHT:
+					look = 0.8 if d < 14.0 else 0.0
+				S.LUNGE:
+					look = 0.6 if lunge_phase() == "telegraph" else 0.0
+				S.PATROL, S.INVESTIGATE:
+					look = 0.45 if awareness > 0.3 and d < 10.0 else 0.0
+				S.GRAB:
+					look = 0.5
+			poser.look_target = player.global_position + Vector3.UP * (0.6 if player.crouching else 1.4)
+		poser.look_weight = move_toward(poser.look_weight, look, dt * 2.5)
 	_step_t -= dt * v
 	if v > 0.3 and _step_t <= 0.0:
 		_step_t = 1.1

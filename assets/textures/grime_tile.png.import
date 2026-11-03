@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://c430buptyqjod"
 path.s3tc="res://.godot/imported/grime_tile.png-ed03d6557c6dbb1a5e849c2aad3476cb.s3tc.ctex"
+path.etc2="res://.godot/imported/grime_tile.png-ed03d6557c6dbb1a5e849c2aad3476cb.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/grime_tile.png"
-dest_files=["res://.godot/imported/grime_tile.png-ed03d6557c6dbb1a5e849c2aad3476cb.s3tc.ctex"]
+dest_files=["res://.godot/imported/grime_tile.png-ed03d6557c6dbb1a5e849c2aad3476cb.s3tc.ctex", "res://.godot/imported/grime_tile.png-ed03d6557c6dbb1a5e849c2aad3476cb.etc2.ctex"]
 
 [params]
 

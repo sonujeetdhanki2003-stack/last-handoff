@@ -32,6 +32,7 @@ func run(lvl: Node3D) -> void:
 	_storage()
 	_lab()
 	_lift()
+	_winch()
 	_archive()
 	_camp()
 	_phase4_extras()
@@ -834,3 +835,25 @@ func _storage_fill() -> void:
 	pipe_run(g, "WireConduit", Vector3(-3.25, 2.6, -18.85), Vector3(-3.25, 2.96, -18.85), 0.03)
 	pipe_run(g, "WireConduit2", Vector3(-3.25, 2.95, -18.85), Vector3(-3.25, 2.95, -16.6), 0.03)
 	decal_floor(g, "grime", Vector3(-3.6, 0.0, -15.0), 2.4, 2.4, 1.4)
+
+
+# ============================================================================ v1.2 winch room
+func _winch() -> void:
+	var g := _group("WinchRoomDressing")
+	# the engineer's log on the desk, a lamp, tools, stacked records
+	readable(g, "lift_log", Vector3(6.15, 0.8, 1.55), 0.15, "binder_notebook", Vector3(0.32, 0.06, 0.4))
+	prop(g, "office_notepads", Vector3(6.75, 0.79, 1.45), -0.3, {"collide": "none"})
+	prop(g, "metal_stool_01", Vector3(6.3, 0.0, 2.3), 0.4)
+	prop(g, "metal_toolbox", Vector3(8.95, 0.0, 5.75), 1.2)
+	prop(g, "oil_tin", Vector3(8.1, 0.0, 2.35), 0.0)
+	prop(g, "metal_jerrycan", Vector3(9.6, 0.0, 1.5), 0.8)
+	prop(g, "wall_clock", Vector3(5.2, 2.35, 1.17), 0.0, {"collide": "none", "rot": Vector3(0, 0, 0)})
+	prop(g, "cardboard_box_01", Vector3(5.1, 0.0, 6.55), 0.2)
+	prop(g, "cardboard_box_01", Vector3(5.15, 0.42, 6.6), -0.25)
+	for i in 3:
+		prop(g, "binder_notebook", Vector3(5.1 + i * 0.32, 0.79, 6.62), PI / 2, {"collide": "none"})
+	# (the records on the shelves are one Blender mesh per shelf: GfxV12 "records_fill")
+	decal_floor(g, "grime", Vector3(8.9, 0.0, 4.0), 2.2, 3.2)
+	decal_floor(g, "papers", Vector3(6.7, 0.0, 2.6), 0.8, 0.8, 0.7)
+	decal_wall(g, "leak_streak", Vector3(9.84, 2.0, 2.4), Vector3(-1, 0, 0), 0.9, 2.2)
+	decal_wall(g, "hazard_stripes", Vector3(4.17, 1.3, 3.75), Vector3(1, 0, 0), 0.4, 2.6, {"modulate": Color(0.9, 0.8, 0.5)})

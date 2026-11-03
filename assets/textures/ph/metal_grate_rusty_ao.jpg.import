@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://codq0g8ik1lm7"
 path.s3tc="res://.godot/imported/metal_grate_rusty_ao.jpg-1c1431189dbc672309b1190e86d94275.s3tc.ctex"
+path.etc2="res://.godot/imported/metal_grate_rusty_ao.jpg-1c1431189dbc672309b1190e86d94275.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/metal_grate_rusty_ao.jpg"
-dest_files=["res://.godot/imported/metal_grate_rusty_ao.jpg-1c1431189dbc672309b1190e86d94275.s3tc.ctex"]
+dest_files=["res://.godot/imported/metal_grate_rusty_ao.jpg-1c1431189dbc672309b1190e86d94275.s3tc.ctex", "res://.godot/imported/metal_grate_rusty_ao.jpg-1c1431189dbc672309b1190e86d94275.etc2.ctex"]
 
 [params]
 

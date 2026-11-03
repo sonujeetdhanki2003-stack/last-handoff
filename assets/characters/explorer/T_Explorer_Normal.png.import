@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cogs5p8jtqgfb"
 path.s3tc="res://.godot/imported/T_Explorer_Normal.png-1546d9929dcac596b4cc480770f0cc79.s3tc.ctex"
+path.etc2="res://.godot/imported/T_Explorer_Normal.png-1546d9929dcac596b4cc480770f0cc79.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/characters/explorer/T_Explorer_Normal.png"
-dest_files=["res://.godot/imported/T_Explorer_Normal.png-1546d9929dcac596b4cc480770f0cc79.s3tc.ctex"]
+dest_files=["res://.godot/imported/T_Explorer_Normal.png-1546d9929dcac596b4cc480770f0cc79.s3tc.ctex", "res://.godot/imported/T_Explorer_Normal.png-1546d9929dcac596b4cc480770f0cc79.etc2.ctex"]
 
 [params]
 

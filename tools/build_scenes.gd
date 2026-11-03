@@ -11,8 +11,17 @@ var mats := {}
 var level: Node3D
 
 
+var level_only := false   ## v1.2: `-- --only=level` rebuilds just the level scene (materials, theme, player and game stay as they are on disk)
+
+
 func _ready() -> void:
+	level_only = Harness.get_arg("only", "") == "level"
 	_make_materials()
+	if level_only:
+		_build_level()
+		print("BUILD OK (level only)")
+		get_tree().quit(0)
+		return
 	ResourceSaver.save(UIKit.make_theme(), "res://ui/theme.tres")
 	_build_player()
 	_build_level()
@@ -54,6 +63,9 @@ func _flat(c: Color, metal := 0.0, rough := 0.7, emission := 0.0) -> StandardMat
 
 func _save_mat(n: String, m: Material) -> Material:
 	var p := "res://assets/materials/%s.tres" % n
+	if level_only and ResourceLoader.exists(p):
+		mats[n] = load(p)
+		return mats[n]
 	ResourceSaver.save(m, p)
 	var r := load(p)
 	mats[n] = r
@@ -551,7 +563,7 @@ func _build_level() -> void:
 	var shaft := room(geo, "EntranceShaft", -4, 4, 0, 8, 0.0, "metal_floor")
 	wall(shaft, "WallBack", "x", 8.0, -4.15, 4.15, 16.0, [], "shaft_wall")
 	wall(shaft, "WallW", "z", -4.0, 0, 8, 16.0, [], "shaft_wall")
-	wall(shaft, "WallE", "z", 4.0, 0, 8, 16.0, [], "shaft_wall")
+	wall(shaft, "WallE", "z", 4.0, 0, 8, 16.0, [[4.0, DW, DH]], "shaft_wall")   # v1.2: door to the winch room
 	wall(shaft, "WallFront", "x", 0.0, -4.15, 4.15, 16.0, [[0.0, DW, DH]], "shaft_wall")
 	slab(shaft, "Cap", -4.2, 4.2, -0.2, 8.2, 16.0, "dark_metal")
 	# lift cage
@@ -564,6 +576,22 @@ func _build_level() -> void:
 	label(shaft, "HALDEN DEEP RESEARCH STATION\nLEVEL B2", Vector3(0, 3.4, 0.17), 0.0, 64)
 	label(shaft, "GENERATOR  /  SECURITY  /  LAB 3", Vector3(0, 2.9, 0.17), 0.0, 36, Color(0.9, 0.7, 0.3))
 	box(shaft, "HazardStrip", Vector3(1.9, 0.01, 0.3), Vector3(0, 0.005, 0.35), "hazard", false)
+
+	# --- v1.2: the lift winch room (x 4.15..10, z 1..7), through a door in the shaft's east wall
+	var win := room(geo, "WinchRoom", 4.15, 10.0, 1.0, 7.0, 3.2, "concrete_floor", "ceiling")
+	wall(win, "WallN", "x", 1.0, 4.0, 10.15, WH, [], "concrete_wall")
+	wall(win, "WallS", "x", 7.0, 4.0, 10.15, WH, [], "concrete_wall")
+	wall(win, "WallE", "z", 10.0, 1.0, 7.0, WH, [], "concrete_wall")
+	# the hoist winch: a plain collider box here; its Blender model replaces the mesh at load (GfxV12)
+	box(win, "WinchBase", Vector3(1.2, 1.3, 2.4), Vector3(8.95, 0.65, 4.0), "green_metal")
+	cyl(win, "WinchRope", 0.02, 4.6, Vector3(6.5, 2.75, 3.75), "pipe", Vector3(0, 0, PI / 2 + 0.12))
+	box(win, "RopeSlot", Vector3(0.12, 0.35, 0.5), Vector3(4.12, 2.9, 3.75), "dark_metal", false)
+	shelf(win, "RecordShelfA", Vector3(5.6, 0, 6.6), PI, 2.2)
+	shelf(win, "RecordShelfB", Vector3(7.9, 0, 6.6), PI, 1.6)
+	desk(win, "WinchDesk", Vector3(6.4, 0, 1.5), 0.0, 1.6)
+	label(win, "B2 HOIST  -  WINCH ROOM", Vector3(7.0, 2.7, 1.17), 0.0, 44, Color(0.9, 0.7, 0.3))
+	label(win, "NO ENTRY WHILE THE CAGE IS MOVING", Vector3(9.83, 2.3, 4.0), -PI / 2, 30, Color(0.95, 0.3, 0.25))
+	label(win, "RECORDS  1971 - 1979", Vector3(6.8, 2.5, 6.83), PI, 30, Color(0.85, 0.85, 0.8))
 
 	# --- Corridor (x -1.6..1.6, z -22..0)
 	var cor := room(geo, "Corridor", -1.6, 1.6, -22, 0, 3.2, "concrete_floor", "ceiling")
@@ -648,6 +676,8 @@ func _build_level() -> void:
 	light(lights, "StorageLamp", Vector3(-4.8, 2.9, -15.5), Color(1.0, 0.8, 0.55), 1.0, 6.0, "aux", 0.6)
 	for i in 2:
 		light(lights, "LabLamp%d" % i, Vector3(-2.5 + i * 5.0, 4.1, -28.0), Color(0.75, 0.88, 1.0), 1.3, 10.0, "lab", 0.08 if i == 1 else 0.0, "lamp_cold")
+	light(lights, "WinchLamp", Vector3(7.0, 3.1, 4.0), Color(1.0, 0.82, 0.58), 1.3, 7.0, "aux", 0.12)
+	light(lights, "WinchRedLamp", Vector3(5.0, 2.6, 1.25), Color(1.0, 0.12, 0.06), 0.5, 4.5, "", 0.0, "lamp_red", false)
 	light(lights, "LabTankGlow", Vector3(0, 1.4, -32.0), Color(0.2, 0.9, 0.8), 0.8, 6.0, "", 0.0, "tank_glow", false, false)
 
 	# ----------------------------------------------------------------- interactables
@@ -665,6 +695,8 @@ func _build_level() -> void:
 	var lift := inst(inter, "res://scripts/interaction/lift.gd", "LiftPanel", Vector3(2.0, 1.2, 5.45), PI, {})
 	_lift_panel_visual(lift)
 
+	inst(inter, "res://scripts/interaction/door.gd", "DoorWinch", Vector3(4.0, 0, 4.0), -PI / 2, {"door_label": "WINCH ROOM", "persist_id": "door_winch"})
+	inst(inter, "res://scripts/interaction/hiding_spot.gd", "LockerWinch", Vector3(9.62, 0.0, 6.25), -PI / 2, {"kind": "locker"})
 	inst(inter, "res://scripts/world/trigger_flag.gd", "LabEntryTrigger", Vector3(0, 0, -24.0), 0.0, {"flag": "lab_entered", "size": Vector3(4.0, 2.5, 2.0)})
 
 	# handoff crate from the previous expedition

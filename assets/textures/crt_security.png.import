@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjpxtus2yplfq"
 path.s3tc="res://.godot/imported/crt_security.png-c3cc53e35be0a7a556c0fdb66cf424e5.s3tc.ctex"
+path.etc2="res://.godot/imported/crt_security.png-c3cc53e35be0a7a556c0fdb66cf424e5.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/crt_security.png"
-dest_files=["res://.godot/imported/crt_security.png-c3cc53e35be0a7a556c0fdb66cf424e5.s3tc.ctex"]
+dest_files=["res://.godot/imported/crt_security.png-c3cc53e35be0a7a556c0fdb66cf424e5.s3tc.ctex", "res://.godot/imported/crt_security.png-c3cc53e35be0a7a556c0fdb66cf424e5.etc2.ctex"]
 
 [params]
 

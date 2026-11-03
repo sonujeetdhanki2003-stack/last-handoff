@@ -18,6 +18,7 @@ signal too_close_changed(close: bool)
 @export var max_pitch := 55.0
 @export var follow_sharpness := 18.0
 @export var hide_distance := 0.65
+const CEILING_CLEAR := 2.5   # max camera height above the player's feet
 
 @onready var yaw_node: Node3D = $Yaw
 @onready var pitch_node: Node3D = $Yaw/Pitch
@@ -63,6 +64,8 @@ func _on_setting(section: String, key: String, v: Variant) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not input_enabled:
 		return
+	if event is InputEventMouseMotion and event.device == InputEvent.DEVICE_ID_EMULATION:
+		return   # a finger, not a mouse: touch look is handled by TouchControls
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		apply_mouse_look(event.relative)
 	elif event.is_action_pressed("switch_shoulder"):
@@ -106,6 +109,12 @@ func _physics_process(delta: float) -> void:
 	var crouching: bool = target.get("crouching") == true
 	_crouch_k = move_toward(_crouch_k, 1.0 if crouching else 0.0, delta * 4.0)
 	var h := lerpf(height, crouch_height, _crouch_k)
+	# Phase 6: looking down raises the camera; keep it under 2.5 m above the floor so
+	# it never ends up inside the ceiling pipes / cable trays (they have no collision).
+	var want := distance
+	if pitch < -1.0:
+		want = minf(distance, maxf((CEILING_CLEAR - h) / sin(deg_to_rad(-pitch)), 0.9))
+	arm.spring_length = move_toward(arm.spring_length, want, delta * 6.0)
 	var goal := target.global_position + Vector3.UP * h
 	global_position = global_position.lerp(goal, clampf(follow_sharpness * delta, 0.0, 1.0))
 	# Never let the follow lag leave the pivot more than 0.3 m behind (teleports, lifts).

@@ -25,6 +25,13 @@ uniform vec3 dirt_color : source_color = vec3(0.09, 0.075, 0.06);
 uniform float streak_strength = 0.35;
 uniform float mottle_strength = 0.35;
 uniform float wet = 0.0;               // 0..1 darker + glossier patches (floors)
+// v1.1: room AO baked in Blender (tools/gfx_blender/bake_level_ao.py) on UV2. Boxes without a
+// UV2 sample the atlas's white corner, so they are unaffected.
+uniform sampler2D baked_ao : hint_default_white, filter_linear_mipmap, repeat_disable;
+uniform float baked_ao_strength = 0.0;
+// v1.1: wet sheen on walls: water runs down the streaks and pools along the floor line
+uniform float wall_wet = 0.0;
+uniform float ao_debug = 0.0;   // tools only: show the baked AO alone
 
 // Two-tone paint (luminance of the albedo recoloured): band_y <= 0 disables.
 uniform float band_y = 0.0;
@@ -90,12 +97,20 @@ void fragment() {
 	alb = mix(alb, dirt_color * (0.7 + 0.6 * g_mid), d);
 	alb = mix(alb, alb * vec3(0.55, 0.5, 0.42), streak * streak_strength);
 	float w = wet * smoothstep(0.55, 0.75, g_big) * b.y;
-	alb *= 1.0 - 0.45 * w;
+	// v1.1: puddles collect in the corners and along the walls (where the baked AO is dark)
+	float bao = texture(baked_ao, UV2).r;
+	float pool = wet * b.y * step(0.0, wnrm.y) * smoothstep(0.92, 0.6, bao) * smoothstep(0.3, 0.6, g_mid);
+	w = max(w, pool);
+	// running water on walls: the streaks and the bottom 25 cm stay damp
+	float ww = wall_wet * side * clamp(streak * 1.6 + (1.0 - smoothstep(0.0, 0.25, h)) * 0.7, 0.0, 1.0);
+	alb *= 1.0 - 0.45 * w - 0.12 * ww;
+	float aoc = pow(clamp((bao - 0.12) / 0.72, 0.0, 1.0), 2.0);   // open surfaces stay 1, corners/contact darken
+	alb *= mix(1.0, aoc, baked_ao_strength);
 
-	ALBEDO = alb;
-	ROUGHNESS = clamp(rgh * rough_mul + rough_add + d * 0.15 - w * 0.75, 0.04, 1.0);
+	ALBEDO = mix(alb, vec3(aoc), ao_debug);
+	ROUGHNESS = clamp(rgh * rough_mul + rough_add + d * 0.15 - w * 0.75 - ww * 0.55, 0.04, 1.0);
 	METALLIC = metallic;
-	AO = mix(1.0, ao, ao_strength);
+	AO = mix(1.0, ao, ao_strength) * mix(1.0, aoc, baked_ao_strength);
 	AO_LIGHT_AFFECT = 0.4;
 	NORMAL = normalize((VIEW_MATRIX * vec4(wn, 0.0)).xyz);
 }

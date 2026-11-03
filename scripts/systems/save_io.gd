@@ -13,7 +13,7 @@ extends RefCounted
 const FORMAT := "lasthandoff-save"
 const VERSION := 1
 
-static var last_status := ""   # "main", "backup", "none", "corrupt_reset"
+static var last_status := ""   # "main", "tmp", "backup", "none", "corrupt_reset"
 static var last_error := ""
 
 
@@ -97,6 +97,23 @@ static func save_json(path: String, data: Dictionary) -> Error:
 ## {"ok": bool, "data": Dictionary, "source": "main"|"backup"|"none", "error": String}
 static func load_json(path: String) -> Dictionary:
 	last_error = ""
+	# Phase 6: a lingering .tmp means a save was cut off before its rename. Every
+	# save writes .tmp and renames it straight away, so a .tmp that passes the
+	# checksum is always newer than main (power cut between verify and rename, or
+	# between "remove the old main" and the rename on platforms that refuse to
+	# rename over a file): promote it. A torn .tmp never finished: drop it.
+	if FileAccess.file_exists(path + ".tmp"):
+		var tdat: Variant = decode(_read(path + ".tmp"))
+		if tdat != null:
+			var main_ok := FileAccess.file_exists(path) and decode(_read(path)) != null
+			if main_ok:
+				DirAccess.copy_absolute(_abs(path), _abs(path + ".bak"))
+			DirAccess.remove_absolute(_abs(path))
+			DirAccess.rename_absolute(_abs(path + ".tmp"), _abs(path))
+			last_status = "tmp"
+			return {"ok": true, "data": tdat, "source": "tmp", "error": ""}
+		DirAccess.remove_absolute(_abs(path + ".tmp"))
+		last_error = ""
 	var main_text := _read(path)
 	var errors: Array[String] = []
 	if main_text != "":

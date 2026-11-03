@@ -5,12 +5,13 @@ config_version=5
 
 config/name="Last Handoff"
 config/description="Third-person survival horror. Every expedition hands off to the next."
-config/version="0.5.0-phase5"
+config/version="1.2.0"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/bg_color=Color(0.02, 0.02, 0.025, 1)
 boot_splash/show_image=false
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
+config/quit_on_go_back=false
 
 [autoload]
 
@@ -20,6 +21,7 @@ GameState="*res://autoload/game_state.gd"
 Harness="*res://autoload/harness.gd"
 Sfx="*res://autoload/sfx.gd"
 Legacy="*res://autoload/legacy.gd"
+Progress="*res://autoload/progress.gd"
 Ux="*res://autoload/ux.gd"
 
 [debug]
@@ -32,6 +34,7 @@ window/size/viewport_width=1600
 window/size/viewport_height=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=4
 
 [gui]
 
@@ -56,9 +59,17 @@ common/physics_ticks_per_second=60
 
 [rendering]
 
+occlusion_culling/use_occlusion_culling=true
+
 renderer/rendering_method="forward_plus"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.mobile="mobile"
+rendering_device/fallback_to_opengl3=true
+textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/screen_space_aa=1
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=2
 environment/defaults/default_clear_color=Color(0.01, 0.01, 0.012, 1)
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true

@@ -42,7 +42,7 @@ func toggle() -> bool:
 
 func set_on(v: bool) -> void:
 	if v and battery.is_empty():
-		Events.interaction_feedback.emit("Battery dead. Press R to swap a cell")
+		Events.interaction_feedback.emit("Battery dead. Press %s to swap a cell" % Ux.glyph("reload_battery"))
 		v = false
 	if v == on:
 		return

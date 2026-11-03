@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cqy1wwm4bgveg"
 path.s3tc="res://.godot/imported/rusty_painted_metal_diff.jpg-56c038bf727cfb2a7ffce0d7b82f78ee.s3tc.ctex"
+path.etc2="res://.godot/imported/rusty_painted_metal_diff.jpg-56c038bf727cfb2a7ffce0d7b82f78ee.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/rusty_painted_metal_diff.jpg"
-dest_files=["res://.godot/imported/rusty_painted_metal_diff.jpg-56c038bf727cfb2a7ffce0d7b82f78ee.s3tc.ctex"]
+dest_files=["res://.godot/imported/rusty_painted_metal_diff.jpg-56c038bf727cfb2a7ffce0d7b82f78ee.s3tc.ctex", "res://.godot/imported/rusty_painted_metal_diff.jpg-56c038bf727cfb2a7ffce0d7b82f78ee.etc2.ctex"]
 
 [params]
 

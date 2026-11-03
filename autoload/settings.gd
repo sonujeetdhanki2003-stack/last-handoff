@@ -6,10 +6,10 @@ extends Node
 signal changed(section: String, key: String, value: Variant)
 
 const PATH := "user://settings.cfg"
-const QUALITY_NAMES := ["Low", "Medium", "High"]
+const QUALITY_NAMES := ["Low", "Medium", "High", "Phone"]
 
 const DEFAULTS := {
-	"audio": {"master": 0.9, "music": 0.8, "sfx": 0.9, "ambience": 0.8},
+	"audio": {"master": 0.9, "music": 0.8, "sfx": 0.9, "ambience": 0.8, "heartbeat": true},
 	"controls": {"mouse_sensitivity": 0.25, "gamepad_sensitivity": 2.6, "invert_y": false, "camera_side": 1,
 		"sprint_mode": 0, "crouch_mode": 1, "vibration": true},
 	"video": {"fullscreen": false, "resolution_scale": 1.0, "quality": 2, "vsync": true, "fov": 72.0, "brightness": 1.0,
@@ -45,13 +45,35 @@ func _ready() -> void:
 	apply_all()
 
 
+## Phone platforms start on the Phone preset at 75 % resolution (Phase 6).
+func default_of(section: String, key: String) -> Variant:
+	if Quality.is_phone_platform() or Harness.has("phone"):
+		if section == "video" and key == "quality":
+			return Quality.PHONE
+		if section == "video" and key == "resolution_scale":
+			return 0.75
+		if section == "video" and key == "fullscreen":
+			return true
+	# v1.2: on a touchscreen RUN is a tap (toggle), not a button to keep holding
+	if section == "controls" and key == "sprint_mode" and is_touch_device():
+		return TOGGLE
+	return DEFAULTS.get(section, {}).get(key)
+
+
+var force_touch := false   ## tests: behave like a touchscreen device
+func is_touch_device() -> bool:
+	return force_touch or Quality.is_phone_platform() or DisplayServer.is_touchscreen_available() or Harness.has("touch")
+
+
 func get_value(section: String, key: String) -> Variant:
-	var def: Variant = DEFAULTS.get(section, {}).get(key)
+	var def: Variant = default_of(section, key)
 	return _cfg.get_value(section, key, def)
 
 
 func set_value(section: String, key: String, value: Variant, save := true) -> void:
 	_cfg.set_value(section, key, value)
+	if section == "controls" and key == "sprint_mode":
+		_cfg.set_value("meta", "sprint_mode_chosen", true)   # the player picked it: never migrate it
 	_apply_one(section, key)
 	changed.emit(section, key, value)
 	if save:
@@ -63,14 +85,14 @@ func reset_to_defaults() -> void:
 	_cfg = ConfigFile.new()
 	for s in DEFAULTS:
 		for k in DEFAULTS[s]:
-			_cfg.set_value(s, k, DEFAULTS[s][k])
+			_cfg.set_value(s, k, default_of(s, k))
 	_cfg.set_value("video", "calibrated", cal)
 	reset_binds(false)
 	save_settings()
 	apply_all()
 	for s in DEFAULTS:
 		for k in DEFAULTS[s]:
-			changed.emit(s, k, DEFAULTS[s][k])
+			changed.emit(s, k, default_of(s, k))
 
 
 func load_settings() -> void:
@@ -79,13 +101,21 @@ func load_settings() -> void:
 	# Fill any missing keys with defaults and sanitise types/ranges.
 	for s in DEFAULTS:
 		for k in DEFAULTS[s]:
-			var d: Variant = DEFAULTS[s][k]
+			var d: Variant = default_of(s, k)
 			var v: Variant = _cfg.get_value(s, k, d)
 			if typeof(v) != typeof(d) and not (typeof(d) == TYPE_FLOAT and typeof(v) == TYPE_INT):
 				v = d
 			_cfg.set_value(s, k, _clamp(s, k, v))
 	_load_binds()
-	if err != OK:
+	# v1.2 migration: a 1.0/1.1 phone save holds RUN = Hold only because that was the old
+	# default. If the player never chose it, move it to the new touch default (Toggle) once.
+	var migrated := false
+	if is_touch_device() and not bool(_cfg.get_value("meta", "sprint_mode_chosen", false)) \
+			and not bool(_cfg.get_value("meta", "sprint_v12", false)):
+		_cfg.set_value("controls", "sprint_mode", TOGGLE)
+		_cfg.set_value("meta", "sprint_v12", true)
+		migrated = true
+	if err != OK or migrated:
 		save_settings()
 
 
@@ -104,7 +134,7 @@ func _clamp(section: String, key: String, v: Variant) -> Variant:
 		"resolution_scale":
 			return clampf(float(v), 0.5, 1.0)
 		"quality":
-			return clampi(int(v), 0, 2)
+			return clampi(int(v), 0, 3)
 		"fov":
 			return clampf(float(v), 55.0, 95.0)
 		"brightness":
@@ -139,7 +169,9 @@ func _apply_one(section: String, key: String) -> void:
 			_set_bus("Ambience", v)
 		["video", "fullscreen"]:
 			if DisplayServer.get_name() != "headless":
-				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if v else DisplayServer.WINDOW_MODE_WINDOWED)
+				# on a phone "windowed" means the status + navigation bars cover the game: always immersive
+				var fs: bool = v or Quality.is_phone_platform()
+				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fs else DisplayServer.WINDOW_MODE_WINDOWED)
 		["video", "vsync"]:
 			if DisplayServer.get_name() != "headless":
 				DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if v else DisplayServer.VSYNC_DISABLED)
@@ -162,27 +194,9 @@ func _set_bus(bus_name: String, linear: float) -> void:
 
 
 func _apply_quality(q: int) -> void:
-	# Global, renderer-level quality. Per-scene effects (SSAO, fog, glow) are
-	# applied by WorldEnvironment nodes that listen to `changed` (see world_env.gd).
-	var vp := get_viewport()
-	if vp == null:
-		return
-	match q:
-		0:
-			vp.msaa_3d = Viewport.MSAA_DISABLED
-			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
-			RenderingServer.directional_shadow_atlas_set_size(1024, false)
-			vp.positional_shadow_atlas_size = 1024
-		1:
-			vp.msaa_3d = Viewport.MSAA_DISABLED
-			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
-			RenderingServer.directional_shadow_atlas_set_size(2048, true)
-			vp.positional_shadow_atlas_size = 2048
-		_:
-			vp.msaa_3d = Viewport.MSAA_2X
-			vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
-			RenderingServer.directional_shadow_atlas_set_size(4096, true)
-			vp.positional_shadow_atlas_size = 4096
+	# Global, renderer-level quality (Quality.P is the one table). Per-scene effects are
+	# applied by WorldEnv; per-node draw distances and the shadow budget by Level.
+	Quality.apply_viewport(get_viewport(), q)
 
 
 # --- Input map ---------------------------------------------------------------

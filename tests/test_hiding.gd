@@ -92,26 +92,65 @@ func run() -> void:
 	locker.leave(p)
 	await t.physics(5)
 
-	# --- seen going in: it pulls you out
-	p.vitals.health = 100.0
-	k.global_position = Vector3(0.5, 0.1, 6.5)
-	k.velocity = Vector3.ZERO
-	k.look_at_flat(Vector3(0, 0, 0))
+	# --- seen going in (from close range): it tears the door open and drags you out.
+	# Phase 6: at full health that is a strike you survive; injured, it is the end.
+	for injured in [false, true]:
+		p.dead = false
+		p.grabbed = false
+		p.vitals.health = 40.0 if injured else 100.0
+		p.set_control(true)
+		k.set_state(Keeper.S.PATROL)
+		await t.physics(2)
+		p.global_position = locker.outside_point()
+		var kp := p.global_position + (Vector3(0.5, 0.1, 6.5) - p.global_position).normalized() * (Keeper.SEEN_HIDING_RANGE - 1.0)
+		k.global_position = Vector3(kp.x, 0.1, kp.z)
+		k.velocity = Vector3.ZERO
+		k.look_at_flat(p.global_position)
+		await t.physics(3)
+		k.awareness = 1.0
+		k.last_seen = p.global_position
+		k.set_state(Keeper.S.CHASE)
+		await t.physics(2)
+		locker.interact(p)
+		await t.physics(2)
+		t.check(k.seen_hiding == locker, "it watched you go in from %.0f m (%s)" % [Keeper.SEEN_HIDING_RANGE - 1.0, "injured" if injured else "healthy"])
+		var struck := [false]
+		var cb := func(_f: bool): struck[0] = true
+		k.caught_player.connect(cb)
+		for i in 60 * 8:
+			await t.physics(1)
+			if p.dead or struck[0]:
+				break
+		k.caught_player.disconnect(cb)
+		await t.physics(2)
+		t.check(not p.is_hidden() and locker.occupant == null, "it pulls you out of the locker (%s)" % ("injured" if injured else "healthy"))
+		if injured:
+			for i in 60 * 6:
+				if p.dead:
+					break
+				await t.physics(1)
+			t.check(p.dead, "injured: pulled out = the end")
+		else:
+			t.check(struck[0] and not p.dead and p.vitals.health < 100.0, "healthy: pulled out and struck, but alive")
+	# seen from farther than SEEN_HIDING_RANGE: the locker holds
+	p.dead = false
+	p.grabbed = false
+	p.vitals = Vitals.new()
+	p.set_control(true)
+	k.set_state(Keeper.S.PATROL)
+	await t.physics(2)
 	p.global_position = locker.outside_point()
+	var far := p.global_position + (Vector3(0.5, 0.1, 6.5) - p.global_position).normalized() * (Keeper.SEEN_HIDING_RANGE + 0.8)
+	k.global_position = Vector3(far.x, 0.1, far.z)
+	k.look_at_flat(p.global_position)
 	await t.physics(3)
-	k.awareness = 1.0
-	k.last_seen = p.global_position
 	k.set_state(Keeper.S.CHASE)
 	await t.physics(2)
 	locker.interact(p)
 	await t.physics(2)
-	t.check(k.seen_hiding == locker, "it watched you go in")
-	for i in 60 * 8:
-		await t.physics(1)
-		if p.dead:
-			break
-	t.check(p.dead, "it opens the locker and pulls you out (fatal, even when healthy)")
-	t.check(not p.is_hidden() and locker.occupant == null, "you're out of the locker")
+	t.check(k.seen_hiding == null, "from %.1f m it can't tell which locker you used" % (Keeper.SEEN_HIDING_RANGE + 0.8))
+	locker.leave(p)
+	await t.physics(5)
 
 	# --- under the cot
 	p.dead = false

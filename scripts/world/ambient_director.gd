@@ -18,6 +18,7 @@ const ROOMS := {
 	"lab": [-6.0, 6.0, -34.0, -22.0, "res://audio/ambience/room_lab.wav", -9.0],
 	"archive": [1.6, 9.0, -21.5, -12.0, "res://audio/ambience/room_security.wav", -14.0],
 	"crawlspace": [-25.0, -10.0, -9.0, -2.0, "res://audio/ambience/room_storage.wav", -11.0],
+	"winch": [4.15, 10.0, 1.0, 7.0, "res://audio/ambience/distant_machinery.wav", -15.0],   # v1.2
 }
 const ONESHOTS := {
 	"drip": ["res://audio/ambience/drip0.wav", "res://audio/ambience/drip1.wav", "res://audio/ambience/drip2.wav"],

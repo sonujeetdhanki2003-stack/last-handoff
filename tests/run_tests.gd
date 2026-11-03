@@ -8,7 +8,7 @@ extends Node
 
 const ALL := ["inventory", "power", "objectives", "battery", "settings", "interaction",
 	"doors", "switches", "puzzles", "movement", "camera", "playthrough", "world",
-	"save", "vitals", "threat", "hiding", "hazards", "handoff", "decisions", "endings", "encounter", "ui", "polish"]
+	"save", "vitals", "threat", "hiding", "hazards", "handoff", "decisions", "endings", "encounter", "ui", "polish", "release", "fairness", "touch", "quality", "v101", "anim", "gfx", "v12"]
 ## Phase 1-3 systems are tested without the Keeper and the hazards (peaceful).
 const PEACEFUL := ["inventory", "power", "objectives", "battery", "settings", "interaction",
 	"doors", "switches", "puzzles", "movement", "camera", "playthrough", "world"]
@@ -55,8 +55,8 @@ func _run(names: Array) -> void:
 		sandbox.name = "Sandbox_" + n
 		add_child(sandbox)
 		var script: Script = load("res://tests/test_%s.gd" % n)
-		if script == null:
-			fail("could not load test_%s.gd" % n)
+		if script == null or not script.can_instantiate():
+			fail("could not load test_%s.gd (parse error?)" % n)
 		else:
 			var tc: TestCase = script.new()
 			tc.t = self

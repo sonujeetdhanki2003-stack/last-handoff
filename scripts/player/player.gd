@@ -58,7 +58,10 @@ func _ready() -> void:
 	flashlight.set_on(GameState.battery_charge > 0.0)  # start with the light on
 	vitals.died.connect(_on_died)
 	vitals.health_changed.connect(func(_h): pass)
-	vitals.winded.connect(func(): Events.noise.emit(global_position, 6.0, "winded"))
+	vitals.winded.connect(func():
+		Events.noise.emit(global_position, 6.0, "winded")
+		Sfx.play("gasp", -2.0)   # v1.2: you hear it, the RUN ring flashes, and the hint says why
+		_block_run("Out of breath"))
 	_update_mouse()
 	Events.player_spawned.emit(self)
 
@@ -262,8 +265,8 @@ func _on_lamp(on: bool) -> void:
 
 
 func _update_mouse() -> void:
-	if DisplayServer.get_name() == "headless":
-		return
+	if DisplayServer.get_name() == "headless" or Quality.is_phone_platform():
+		return   # phones: no pointer capture (touch look is TouchControls)
 	var free := Events.modal_open or get_tree().paused or not control_enabled
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if free else Input.MOUSE_MODE_CAPTURED
 
@@ -298,8 +301,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("crouch"):
 		if int(Settings.get_value("controls", "crouch_mode")) == Settings.HOLD and crouching:
 			_want_stand = true
-	elif event.is_action_pressed("sprint") and int(Settings.get_value("controls", "sprint_mode")) == Settings.TOGGLE:
-		sprint_latched = not sprint_latched
+	elif event.is_action_pressed("sprint"):
+		_on_sprint_pressed()
 	elif event.is_action_pressed("interact"):
 		_begin_interact()
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -307,6 +310,55 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 var sprint_latched := false
+signal run_blocked(reason: String)
+var run_block_reason := ""      ## v1.2: why the last RUN press could not run ("" = it could)
+var run_block_t := 0.0          ## seconds the RUN button stays red
+var _latch_idle := 0.0
+var _run_check_t := -1.0
+var _run_hint_ms := -100000
+const RUN_LATCH_GRACE := 0.45   ## a latched run survives this long without stick input (tap RUN, then push)
+
+
+## v1.2: RUN pressed. Toggle mode latches (and stands you up from a crouch); either mode
+## says why when running is not possible right now.
+func _on_sprint_pressed() -> void:
+	var toggle := int(Settings.get_value("controls", "sprint_mode")) == Settings.TOGGLE
+	if toggle and sprint_latched:
+		sprint_latched = false
+		return
+	if crouching:
+		if _can_stand():
+			_set_crouch(false)
+		else:
+			_block_run("No room to stand up")
+			return
+	if not vitals.can_sprint():
+		_block_run("Too hurt to run" if vitals.health < Vitals.CRITICAL else "Too tired to run")
+		return
+	if toggle:
+		sprint_latched = true
+		_latch_idle = 0.0
+	_run_check_t = 0.6   # still not moving after this: tell them to push the stick
+
+
+func run_blocked_reason_now() -> String:
+	if hidden_in or dead:
+		return ""
+	if crouching and not _can_stand():
+		return "No room to stand up"
+	if not vitals.can_sprint():
+		return "Too hurt to run" if vitals.health < Vitals.CRITICAL else "Too tired to run"
+	return ""
+
+
+func _block_run(reason: String) -> void:
+	run_block_reason = reason
+	run_block_t = 0.8
+	run_blocked.emit(reason)
+	var now := Time.get_ticks_msec()
+	if now - _run_hint_ms > 2500:
+		_run_hint_ms = now
+		Events.interaction_feedback.emit(reason)
 var _want_stand := false
 var threat_near := false     ## the HUD pulse quickens; set by the Keeper while it hunts you
 var _breath: AudioStreamPlayer
@@ -394,9 +446,17 @@ func _physics_process(delta: float) -> void:
 		_want_stand = false
 	var sprint_held := Input.is_action_pressed("sprint")
 	if int(Settings.get_value("controls", "sprint_mode")) == Settings.TOGGLE:
-		if input.length() < 0.1 or not vitals.can_sprint() or crouching:
+		# v1.2: a short grace, so tap RUN then push the stick works; stops when you let go
+		_latch_idle = _latch_idle + delta if input.length() < 0.1 else 0.0
+		if _latch_idle > RUN_LATCH_GRACE or not vitals.can_sprint() or crouching:
 			sprint_latched = false
 		sprint_held = sprint_latched
+	run_block_t = maxf(0.0, run_block_t - delta)
+	if _run_check_t > 0.0:
+		_run_check_t -= delta
+		if _run_check_t <= 0.0 and input.length() < 0.1 and can_act() and not hidden_in \
+				and (Input.is_action_pressed("sprint") or sprint_latched or int(Settings.get_value("controls", "sprint_mode")) == Settings.TOGGLE):
+			_block_run("Push the stick to run" if Ux.using_touch else "Move to run")
 	running = sprint_held and not crouching and input.length() > 0.1 and can_act() and vitals.can_sprint() and not hidden_in
 	vitals.step(delta, running)
 	_process_breath(delta)
@@ -638,6 +698,9 @@ func rumble(strength: float, dur: float) -> void:
 		return
 	for d in Input.get_connected_joypads():
 		Input.start_joy_vibration(d, clampf(strength * 0.6, 0.0, 1.0), clampf(strength, 0.0, 1.0), dur)
+	# v1.2: phones buzz too (hits, grabs), short so it stays battery-friendly
+	if Quality.is_phone_platform():
+		Input.vibrate_handheld(int(clampf(dur, 0.05, 0.4) * 1000.0), clampf(strength, 0.1, 1.0))
 
 
 func use_medkit() -> bool:

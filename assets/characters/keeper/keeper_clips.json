@@ -1,0 +1,80 @@
+{
+ "kp_idle": {
+  "frames": 72,
+  "seconds": 2.4,
+  "loop": true,
+  "native_speed": 0.0
+ },
+ "kp_idle_head": {
+  "frames": 72,
+  "seconds": 2.4,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_idle_fingers": {
+  "frames": 72,
+  "seconds": 2.4,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_stalk": {
+  "frames": 36,
+  "seconds": 1.2,
+  "loop": true,
+  "native_speed": 1.25
+ },
+ "kp_run": {
+  "frames": 20,
+  "seconds": 0.6666666666666666,
+  "loop": true,
+  "native_speed": 3.4
+ },
+ "kp_crawl": {
+  "frames": 28,
+  "seconds": 0.9333333333333333,
+  "loop": true,
+  "native_speed": 1.2
+ },
+ "kp_scream": {
+  "frames": 15,
+  "seconds": 0.5,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_lunge": {
+  "frames": 9,
+  "seconds": 0.3,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_stagger": {
+  "frames": 30,
+  "seconds": 1.0,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_grab": {
+  "frames": 24,
+  "seconds": 0.8,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_vent_drop": {
+  "frames": 36,
+  "seconds": 1.2,
+  "loop": false,
+  "native_speed": 0.0
+ },
+ "kp_search": {
+  "frames": 60,
+  "seconds": 2.0,
+  "loop": true,
+  "native_speed": 0.0
+ },
+ "kp_recoil": {
+  "frames": 36,
+  "seconds": 1.2,
+  "loop": false,
+  "native_speed": 0.0
+ }
+}

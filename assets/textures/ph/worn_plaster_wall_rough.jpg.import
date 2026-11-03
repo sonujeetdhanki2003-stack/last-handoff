@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dkwy71lm5mhw5"
 path.s3tc="res://.godot/imported/worn_plaster_wall_rough.jpg-5f028a2aa969ca4ea2b6a52b33692c9a.s3tc.ctex"
+path.etc2="res://.godot/imported/worn_plaster_wall_rough.jpg-5f028a2aa969ca4ea2b6a52b33692c9a.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/worn_plaster_wall_rough.jpg"
-dest_files=["res://.godot/imported/worn_plaster_wall_rough.jpg-5f028a2aa969ca4ea2b6a52b33692c9a.s3tc.ctex"]
+dest_files=["res://.godot/imported/worn_plaster_wall_rough.jpg-5f028a2aa969ca4ea2b6a52b33692c9a.s3tc.ctex", "res://.godot/imported/worn_plaster_wall_rough.jpg-5f028a2aa969ca4ea2b6a52b33692c9a.etc2.ctex"]
 
 [params]
 

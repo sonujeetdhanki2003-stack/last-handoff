@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwtls2qmg00ut"
 path.s3tc="res://.godot/imported/worn_planks_diff.jpg-547d23abf13e5f25a9cfa547e48be2a3.s3tc.ctex"
+path.etc2="res://.godot/imported/worn_planks_diff.jpg-547d23abf13e5f25a9cfa547e48be2a3.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/worn_planks_diff.jpg"
-dest_files=["res://.godot/imported/worn_planks_diff.jpg-547d23abf13e5f25a9cfa547e48be2a3.s3tc.ctex"]
+dest_files=["res://.godot/imported/worn_planks_diff.jpg-547d23abf13e5f25a9cfa547e48be2a3.s3tc.ctex", "res://.godot/imported/worn_planks_diff.jpg-547d23abf13e5f25a9cfa547e48be2a3.etc2.ctex"]
 
 [params]
 

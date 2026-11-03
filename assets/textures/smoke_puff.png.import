@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://c3s6exndslqp"
 path.s3tc="res://.godot/imported/smoke_puff.png-f26fffc7abfaa0afa6d479a34c3edd74.s3tc.ctex"
+path.etc2="res://.godot/imported/smoke_puff.png-f26fffc7abfaa0afa6d479a34c3edd74.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/smoke_puff.png"
-dest_files=["res://.godot/imported/smoke_puff.png-f26fffc7abfaa0afa6d479a34c3edd74.s3tc.ctex"]
+dest_files=["res://.godot/imported/smoke_puff.png-f26fffc7abfaa0afa6d479a34c3edd74.s3tc.ctex", "res://.godot/imported/smoke_puff.png-f26fffc7abfaa0afa6d479a34c3edd74.etc2.ctex"]
 
 [params]
 

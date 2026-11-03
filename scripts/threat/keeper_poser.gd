@@ -11,7 +11,13 @@ var reach := 0.0        ## arms forward (chase/lunge)
 var grab := 0.0         ## fingers curl, arms in
 var shield := 0.0       ## forearms over the face (repelled by light)
 var crawl := 0.0        ## low prowl: torso near horizontal, arms down to the floor
-var hips_lift := 0.11
+var hips_lift := 0.113
+## v1.1: the Keeper's body motion comes from its Blender clips; in clip mode this layer only
+## turns the head (and a little of the neck) toward look_target, by look_weight.
+var clip_mode := false
+var look_target := Vector3.ZERO
+var look_weight := 0.0
+const LOOK_MAX := 1.1        ## rad: it won't wrench its head further round than this
 var t := 0.0
 var _ids := {}
 var _twitch := Vector3.ZERO
@@ -60,6 +66,9 @@ func _process_modification_with_delta(delta: float) -> void:
 func _step(delta: float) -> void:
 	var sk := get_skeleton()
 	if sk == null:
+		return
+	if clip_mode:
+		_look()
 		return
 	t += delta
 	_twitch_t -= delta
@@ -113,3 +122,24 @@ func _step(delta: float) -> void:
 				if i >= 0:
 					var lq := sk.get_bone_pose_rotation(i)
 					sk.set_bone_pose_rotation(i, lq * Quaternion(Vector3.RIGHT, curl * 0.55))
+
+
+## Head look-at on top of the clips. The face looks along the head bone's +Z (the model faces +Z).
+func _look() -> void:
+	if look_weight <= 0.001:
+		return
+	var sk := get_skeleton()
+	var h := _bone("Head")
+	if h < 0:
+		return
+	var gp := sk.get_bone_global_pose(h)
+	var target := sk.global_transform.affine_inverse() * look_target
+	var want := target - gp.origin
+	if want.length() < 0.2:
+		return
+	var cur := gp.basis.z.normalized()
+	var q := Quaternion(cur, want.normalized())
+	var ang := q.get_angle()
+	var k := look_weight * (minf(1.0, LOOK_MAX / ang) if ang > 0.001 else 1.0)
+	_rot_model("Neck", Quaternion.IDENTITY.slerp(q, k * 0.3))
+	_rot_model("Head", Quaternion.IDENTITY.slerp(q, k * 0.7))

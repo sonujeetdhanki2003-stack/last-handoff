@@ -48,6 +48,7 @@ var _tape_t := 0.0
 var end_panel: Control
 var _end_title: Label
 var _end_stats: Label
+var _end_again: Button
 
 # Phase 5
 var _obj_box: Control
@@ -66,6 +67,7 @@ var _icons := {}
 var _last_battery := -1.0
 var _last_health := -1.0
 const OBJ_SHOW := 7.0
+var touch: TouchControls = null
 
 
 func _ready() -> void:
@@ -95,6 +97,7 @@ func _ready() -> void:
 	create_tween().tween_property(_fade, "color:a", 0.0, 1.6).set_delay(0.2)
 
 	Events.toast.connect(show_toast)
+	Ux.device_changed.connect(func(_p): if player: _refresh_battery())   # "[R] SWAP" follows the device
 	Events.interaction_feedback.connect(show_refusal)
 	Events.show_note.connect(open_note)
 	Events.open_keypad.connect(open_keypad)
@@ -111,6 +114,17 @@ func _ready() -> void:
 
 func bind_player(p: Player) -> void:
 	player = p
+	# Phase 6: on-screen controls on touchscreens, above the HUD and its panels
+	if TouchControls.wanted() and touch == null:
+		var tl := CanvasLayer.new()
+		tl.name = "TouchLayer"
+		tl.layer = 6
+		tl.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(tl)
+		touch = TouchControls.new()
+		touch.player = p
+		tl.add_child(touch)
+	apply_safe_area()
 	p.interaction_target_changed.connect(_on_target)
 	p.hold_progress.connect(_on_hold)
 	p.flashlight.battery_changed.connect(func(_c): _refresh_battery())
@@ -444,7 +458,7 @@ func _build_keypad() -> void:
 		var kk: String = k
 		b.pressed.connect(func(): _keypad_press(kk))
 		grid.add_child(b)
-	var close := UIKit.button("Step away   [Esc]", 22)
+	var close := UIKit.button("Step away", 22)   # Esc / B / BACK all close it; no single key name fits every device
 	close.pressed.connect(close_keypad)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(close)
@@ -466,11 +480,16 @@ func _build_end() -> void:
 	row.add_theme_constant_override("separation", 12)
 	v.add_child(row)
 	var again := UIKit.button("New expedition", 28)
+	again.name = "Again"
+	_end_again = again
 	again.pressed.connect(func():
 		get_tree().paused = false
 		Events.set_modal(false)
-		GameState.expedition_number += 1
-		GameState.new_expedition()
+		if GameState.chapter_run != "":
+			Progress.begin_chapter(GameState.chapter_run)   # v1.2: retry the same chapter
+		else:
+			GameState.expedition_number += 1
+			GameState.new_expedition()
 		get_tree().change_scene_to_file("res://scenes/game.tscn"))
 	row.add_child(again)
 	var menu := UIKit.button("Main menu", 28)
@@ -482,7 +501,30 @@ func _build_end() -> void:
 
 
 # ------------------------------------------------------------------ live updates
+## Keep the corner widgets out of a notch / rounded corner, and the toasts below the
+## on-screen BAG / II buttons on a touchscreen.
+var _safe_applied := Vector4(-1, -1, -1, -1)
+func apply_safe_area() -> void:
+	var m := Ux.safe_margins(get_viewport())
+	_safe_applied = m
+	if _obj_box:
+		_obj_box.position = Vector2(48 + m.x, 38 + m.y)
+	if _device:
+		_device.offset_left = 40 + m.x
+		_device.offset_top = -150 - m.w
+		_device.offset_bottom = -36 - m.w
+	if _toasts:
+		_toasts.offset_right = -44 - m.z
+		_toasts.offset_left = -600 - m.z
+		_toasts.offset_top = 40 + m.y + (150.0 if touch != null else 0.0)
+	if _area_box:
+		_area_box.offset_left = 48 + m.x
+		_area_box.offset_top = -290 - m.w
+
+
 func _process(delta: float) -> void:
+	if Ux.safe_margins(get_viewport()) != _safe_applied:
+		apply_safe_area()
 	_process_tape(delta)
 	_process_vitals(delta)
 	_process_fades(delta)
@@ -870,6 +912,13 @@ func show_end(reason: String) -> void:
 	var secs := int(GameState.elapsed) % 60
 	_end_title.text = "EXPEDITION %d COMPLETE" % GameState.expedition_number if reason == "extracted" else "EXPEDITION LOST"
 	_end_stats.text = "You rode the lift up with the Lab 3 research drive.\n\nTime underground: %d:%02d\nFlashlight charge left: %d%%\n\n(Prototype end. Phase 4 adds the handoff: what you leave behind for the next expedition.)" % [mins, secs, int(GameState.battery_charge * 100)]
+	if GameState.chapter_run != "":
+		var c: Dictionary = Progress.CHAPTERS[maxi(0, Progress.chapter_index(GameState.chapter_run))]
+		_end_title.text = ("CHAPTER %s COMPLETE" if reason == "extracted" else "CHAPTER %s LOST") % c["num"]
+		_end_stats.text = "%s\n\n%s\nTime: %d:%02d\n\nChapter runs are replays: nothing here is written to your chain." % [
+			str(c["title"]).to_upper(), "You rode the lift up." if reason == "extracted" else "Taken in the dark.", mins, secs]
+		if _end_again:
+			_end_again.text = "Retry chapter"
 	end_panel.visible = true
 	Events.set_modal(true)
 	get_tree().paused = true
@@ -1028,7 +1077,10 @@ func _process_vitals(delta: float) -> void:
 	_health_bar.value = v.health
 	_stamina_bar.value = v.stamina
 	var tired := v.stamina < 0.999
-	_stamina_bar.modulate.a = move_toward(_stamina_bar.modulate.a, 1.0 if tired else 0.0, delta * 3.0)
+	var show_bar := tired or touch != null   # v1.2: always shown with touch controls
+	if touch != null and _stamina_bar.custom_minimum_size.y < 8.0:
+		_stamina_bar.custom_minimum_size.y = 8.0
+	_stamina_bar.modulate.a = move_toward(_stamina_bar.modulate.a, 1.0 if show_bar else 0.0, delta * 3.0)
 	_stamina_bar.modulate = Color(1, 0.55, 0.2, _stamina_bar.modulate.a) if v.exhausted else Color(1, 1, 1, _stamina_bar.modulate.a)
 	if tired:
 		_wake_device(2.0)

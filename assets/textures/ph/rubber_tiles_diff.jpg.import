@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dve0lm3lmpx3f"
 path.s3tc="res://.godot/imported/rubber_tiles_diff.jpg-e1fa1151bc227ece39d51776bd3f4982.s3tc.ctex"
+path.etc2="res://.godot/imported/rubber_tiles_diff.jpg-e1fa1151bc227ece39d51776bd3f4982.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ph/rubber_tiles_diff.jpg"
-dest_files=["res://.godot/imported/rubber_tiles_diff.jpg-e1fa1151bc227ece39d51776bd3f4982.s3tc.ctex"]
+dest_files=["res://.godot/imported/rubber_tiles_diff.jpg-e1fa1151bc227ece39d51776bd3f4982.s3tc.ctex", "res://.godot/imported/rubber_tiles_diff.jpg-e1fa1151bc227ece39d51776bd3f4982.etc2.ctex"]
 
 [params]
 

@@ -12,6 +12,7 @@ const PATROL := [
 	Vector3(-4.5, 0, -13.5), Vector3(-6.5, 0, -17.0), Vector3(-3.0, 0, -17.6),
 	Vector3(-3.0, 0, -25.0), Vector3(3.5, 0, -27.0), Vector3(0.0, 0, -32.0), Vector3(-4.0, 0, -31.0),
 	Vector3(3.6, 0, -14.0), Vector3(5.0, 0, -19.0), Vector3(7.5, 0, -20.0),
+	Vector3(6.6, 0, 4.6),   # v1.2: the winch room off the shaft
 ]
 const LAIR := Vector3(3.1, 0.0, -31.0)
 
@@ -23,7 +24,7 @@ static func bake(level: Node3D) -> NavigationRegion3D:
 	var nm := NavigationMesh.new()
 	nm.cell_size = 0.25
 	nm.cell_height = 0.1
-	nm.agent_radius = 0.4
+	nm.agent_radius = 0.5   # a whole number of 0.25 m cells (0.4 was ceiled to 0.5 anyway, with a warning)
 	nm.agent_height = 2.0
 	nm.agent_max_climb = 0.5
 	nm.agent_max_slope = 40.0

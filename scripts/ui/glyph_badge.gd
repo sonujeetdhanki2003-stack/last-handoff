@@ -37,6 +37,9 @@ func refresh() -> void:
 		_text = "A" if _pad else "Enter"
 	elif action == "ui_cancel":
 		_text = "B" if _pad else "Esc"
+	if Ux.using_touch and Ux.TOUCH_LABELS.has(action):
+		_pad = false
+		_text = Ux.TOUCH_LABELS[action]
 	var f := UIKit.font("mono_bold")
 	var w := f.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var h := font_size * 1.45

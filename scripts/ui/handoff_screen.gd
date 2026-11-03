@@ -79,6 +79,8 @@ func _init() -> void:
 	_custom_edit.add_theme_font_size_override("font_size", 20)
 	_custom_edit.custom_minimum_size.y = 46
 	_custom_edit.text_changed.connect(func(t: String): set_custom(t))
+	# Enter / the soft keyboard's Done key: close the keyboard and move on to the confirm button
+	_custom_edit.text_submitted.connect(func(_t: String): _confirm.grab_focus())
 	c1.add_child(_custom_edit)
 
 	# 2. item
@@ -203,7 +205,7 @@ func open() -> void:
 	var pd: Dictionary = Legacy.pending
 	var n := int(pd.get("expedition", GameState.expedition_number))
 	var who := str(pd.get("member", GameState.member_name))
-	_header.text = "EXPEDITION %d   -   %s" % [n, who.to_upper()]
+	_header.text = ("EXPEDITION %d   -   %s" % [n, who.to_upper()]) if who != "" else ("EXPEDITION %d" % n)
 	var t := int(pd.get("time", 0))
 	_sub.text = "%s   -   deepest: %s   -   %d:%02d underground" % [Lore.end_label(str(pd.get("end", ""))), Lore.depth_name(str(pd.get("depth", "shaft"))), t / 60, t % 60]
 	# items
@@ -387,3 +389,23 @@ func next_member() -> void:
 	Legacy.begin_expedition()
 	GameState.play_intro = true
 	Ux.change_scene("res://scenes/game.tscn", 0.6, 0.01)
+
+
+## Phones: lift the form so the message box stays above the soft keyboard while typing.
+func _process(_d: float) -> void:
+	if not visible or _main == null:
+		return
+	var kh := 0
+	if _custom_edit.has_focus() and DisplayServer.get_name() != "headless":
+		kh = DisplayServer.virtual_keyboard_get_height()
+	_main.position.y = keyboard_shift(kh, DisplayServer.window_get_size().y if kh > 0 else 1)
+
+
+## How far (viewport units, <= 0) to move the form up for a keyboard kh screen px tall.
+func keyboard_shift(kh: int, win_h: int) -> float:
+	if kh <= 0 or win_h <= 0:
+		return 0.0
+	var vs := get_viewport().get_visible_rect().size
+	var kb_top := vs.y - float(kh) * vs.y / float(win_h)
+	var bottom := _custom_edit.get_global_rect().end.y - _main.position.y
+	return minf(0.0, kb_top - 16.0 - bottom)
