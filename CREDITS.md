@@ -1,0 +1,25 @@
+# Last Handoff - credits and licences
+
+A game by **Sonujeet**. Built in Godot Engine 4.7.2 (MIT licence, https://godotengine.org/license).
+
+| Asset | Source | Licence | Where |
+|---|---|---|---|
+| Explorer character mesh ("Universal Base Characters", Standard, glTF), reshaped, re-textured and dressed for this project | Quaternius, https://quaternius.itch.io/universal-base-characters | CC0 1.0 | assets/characters/explorer/ |
+| Character animations ("Universal Animation Library", free standard version, glTF), retargeted to Godot's humanoid profile | Quaternius, https://quaternius.com (mirror: github.com/J-Ponzo/gltf-universal-animation-library, copy of the itch.io release 2025-06-10) | CC0 1.0 | assets/characters/mannequin/, assets/characters/ual_animations.res |
+| 3D props (1K glTF): Barrel_01, SchoolChair_01, WetFloorSign_01, barrel_03, binder_notebook, bunsen_burner, caged_hanging_light, can_rusted, cardboard_box_01, chemistry_set, circuit_board, clipboard, crowbar_01, fire_alarm, hand_truck, industrial_microscope, industrial_pastic_container, industrial_storage_cart, industrial_wall_lamp, long_life_food, medical_box, metal_jerrycan, metal_jerrycan_green, metal_office_desk, metal_stool_01, metal_tool_chest, metal_toolbox, metal_trash_can, office_notepads, oil_tin, old_bed_frame, old_gas_mask, old_military_compressor, old_military_crate, plastic_crate_01, plastic_crate_03, plastic_jerrycan, portable_cassette_player, portable_generator, portable_searchlight, power_box_01, propane_tank, retro_multimeter, russian_food_cans_01, security_camera_01, signal_flashlight, steel_frame_shelves_02, television_02, tool_cart, vintage_radio_transceiver, vintage_spacecraft_instrument, wall_clock, wooden_military_crate, worn_metal_rack | Poly Haven, https://polyhaven.com/models | CC0 1.0 | assets/props/<name>/ |
+| PBR textures (1K: diffuse, normal, roughness, AO): concrete_floor_damaged_01, concrete_wall_008, cracked_concrete_wall, damaged_concrete_floor, dirty_concrete, green_metal_rust, long_white_tiles, metal_grate_rusty, metal_plate, metal_plate_02, painted_concrete, painted_concrete_02, rubber_tiles, rusty_metal_02, rusty_metal_sheet, rusty_painted_metal, worn_planks, worn_plaster_wall, worn_tile_floor | Poly Haven, https://polyhaven.com/textures | CC0 1.0 | assets/textures/ph/ |
+| Oswald (variable) | Vernon Adams et al. / Google Fonts | SIL Open Font License 1.1 | assets/fonts/ (OFL_oswald.txt) |
+| Barlow Condensed | Jeremy Tribby / Google Fonts | SIL Open Font License 1.1 | assets/fonts/ (OFL_barlowcondensed.txt) |
+| IBM Plex Mono | IBM | SIL Open Font License 1.1 | assets/fonts/ (OFL_ibmplexmono.txt) |
+| Caveat (handwritten notes) | Impallari Type / Google Fonts | SIL Open Font License 1.1 | assets/fonts/ (OFL_caveat.txt) |
+| Permanent Marker (spray scrawls, chalk) | Font Diner / Google Fonts | Apache License 2.0 | assets/fonts/ (LICENSE_permanentmarker_Apache2.txt) |
+| Special Elite (typed documents, stencils) | Astigmatic / Google Fonts | Apache License 2.0 | assets/fonts/ (LICENSE_specialelite_Apache2.txt) |
+| Audio-log voices (6 tapes) | Text-to-speech generated for this project (ElevenLabs, commercial-use licence on the generating account), then processed into "cassette" recordings (band-limit, wow, compression, tape hiss) | Project-owned output | audio/logs/ (raw takes in src_assets/vo/, outside the game) |
+| Phase 5 sound effects (67): footsteps on concrete/metal/tile/water, cloth, breathing, hurt, pickups, battery, flashlight, medkit, inventory, doors, lockers, levers, breakers, fuses, generator start, keycard, vent bangs, lift loop/stop/gate, PA chime, Keeper vocals (click, breath, alert, scream, sniff, steps, crawl, lunge, hurt, grab, drag), UI clicks/hovers/tabs/stamp/typewriter, stingers | Generated for this project with ElevenLabs sound-effects generation (commercial-use licence on the generating account), then trimmed, faded, loudness-matched and loop-crossfaded in code | Project-owned output | audio/foley/, audio/keeper/, audio/ui/, audio/stingers/, audio/sfx2/ (raw takes in src_assets/sfx_gen/, outside the game) |
+| Station PA announcements (4) | Text-to-speech (ElevenLabs), processed into a PA chain (band-pass, slap echo, chime) | Project-owned output | audio/pa/ (raw takes in src_assets/vo_pa/) |
+| Tape subtitle timings | Word timings from the open-source faster-whisper model (MIT) run offline on the tape recordings, aligned to the scripts | MIT (tool); timings project-owned | audio/logs/subtitles.json |
+| Sound effects, room tones, machinery, drips, groans, drone and tension layers, tape hiss, sparks | Synthesised in code for this project (numpy) | Project-owned | audio/sfx/, audio/ambience/, audio/music/ |
+| Decals (leaks, rust, scorch, grime, puddles, hazard stripes, papers, signage), chalk marks, spray scrawls, CRT screen images, smoke sprite | Generated procedurally for this project (Python/PIL with the fonts above) | Project-owned | assets/decals/, assets/textures/ |
+
+Everything else (scripts, shaders, level geometry, materials, UI, story text) was made for this project.
+No online services, no telemetry, no purchases: the game is fully offline.

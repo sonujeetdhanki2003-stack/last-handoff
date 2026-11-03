@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/game.gd" id="1_0tnpc"]
+[ext_resource type="PackedScene" path="res://scenes/levels/facility_greybox.tscn" id="2_vtaks"]
+[ext_resource type="Script" path="res://scripts/world/level.gd" id="3_kvpfn"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_dinhu"]
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="5_kvuet"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_trtic"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="7_ir15t"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="8_ca42v"]
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="9_rysoc"]
+
+[node name="Game" type="Node3D" unique_id=615670016]
+script = ExtResource("1_0tnpc")
+
+[node name="Level" type="Node3D" parent="." unique_id=1255847355 instance=ExtResource("2_vtaks")]
+script = ExtResource("3_kvpfn")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1683208624 instance=ExtResource("4_dinhu")]
+collision_layer = 2
+collision_mask = 9
+floor_snap_length = 0.3
+script = ExtResource("5_kvuet")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=187956399 instance=ExtResource("6_trtic")]
+script = ExtResource("7_ir15t")
+
+[node name="PauseMenu" type="CanvasLayer" parent="." unique_id=291022855 instance=ExtResource("8_ca42v")]
+script = ExtResource("9_rysoc")

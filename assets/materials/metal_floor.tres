@@ -1,0 +1,35 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/facility_surface.gdshader" id="1_ttd0a"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_plate_diff.jpg" id="2_87r4j"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_plate_ao.jpg" id="3_gdt8e"]
+[ext_resource type="Texture2D" path="res://assets/textures/grime_tile.png" id="4_xmnkp"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_plate_nor.jpg" id="5_5ae6c"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_plate_rough.jpg" id="6_p3hqr"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_ttd0a")
+shader_parameter/albedo_tex = ExtResource("2_87r4j")
+shader_parameter/normal_tex = ExtResource("5_5ae6c")
+shader_parameter/rough_tex = ExtResource("6_p3hqr")
+shader_parameter/ao_tex = ExtResource("3_gdt8e")
+shader_parameter/grime_tex = ExtResource("4_xmnkp")
+shader_parameter/tint = Color(0.62, 0.6, 0.57, 1)
+shader_parameter/scale = 0.55
+shader_parameter/normal_strength = null
+shader_parameter/rough_mul = 0.9
+shader_parameter/rough_add = null
+shader_parameter/metallic = 0.55
+shader_parameter/ao_strength = null
+shader_parameter/floor_y = null
+shader_parameter/dirt_height = null
+shader_parameter/dirt_strength = 0.45
+shader_parameter/dirt_color = null
+shader_parameter/streak_strength = null
+shader_parameter/mottle_strength = null
+shader_parameter/wet = 0.35
+shader_parameter/band_y = null
+shader_parameter/lower_color = null
+shader_parameter/upper_color = null
+shader_parameter/paint_mix = null

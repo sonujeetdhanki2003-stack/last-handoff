@@ -1,0 +1,52 @@
+extends TestCase
+
+func run() -> void:
+	var g := PowerGrid.new()
+	g.define("aux")
+	g.define("lights", ["aux"])
+	g.define("lab", ["aux"])
+	g.define("deep", ["lab"])
+	var changes := []
+	g.circuit_changed.connect(func(id, p): changes.append([id, p]))
+	t.check(not g.is_powered("aux"), "circuits start unpowered")
+	g.set_on("lights", true)
+	t.check(g.is_on("lights") and not g.is_powered("lights"), "switched-on child without parent is not powered")
+	t.eq(changes, [], "no change signal while still unpowered")
+	g.set_on("aux", true)
+	t.check(g.is_powered("lights"), "parent on -> child powered")
+	t.check(not g.is_powered("lab"), "sibling still off")
+	t.check([["aux", true], ["lights", true]] == changes or [["lights", true], ["aux", true]] == changes, "signals for aux + dependent lights")
+	g.set_on("lab", true)
+	g.set_on("deep", true)
+	t.check(g.is_powered("deep"), "two-level dependency powered")
+	changes.clear()
+	g.set_on("aux", false)
+	t.check(not g.is_powered("deep") and not g.is_powered("lights"), "cutting aux cuts everything downstream")
+	t.eq(changes.size(), 4, "4 circuits reported losing power")
+	t.check(g.is_on("deep"), "downstream switch positions are remembered")
+	g.set_on("aux", true)
+	t.check(g.is_powered("deep"), "restoring aux restores downstream")
+	t.check(g.is_powered(""), "empty circuit id counts as always powered")
+	t.check(not g.is_powered("missing"), "unknown circuit is unpowered")
+	# cycles must not hang
+	g.define("a", ["b"], true)
+	g.define("b", ["a"], true)
+	t.check(not g.is_powered("a"), "dependency cycle resolves to unpowered (no hang)")
+	var d := g.to_dict()
+	var g2 := PowerGrid.new()
+	g2.from_dict(JSON.parse_string(JSON.stringify(d)))
+	t.check(g2.is_powered("deep") and g2.is_on("lights"), "grid round-trips through JSON")
+
+	# Powered light node follows its circuit
+	GameState.grid.set_on("aux", false)
+	var pl := PoweredLight.new()
+	pl.circuit = "aux"
+	var o := OmniLight3D.new()
+	o.light_energy = 2.0
+	pl.add_child(o)
+	t.sandbox.add_child(pl)
+	await t.frames(1)
+	t.check(not o.visible, "powered light is dark without power")
+	GameState.grid.set_on("aux", true)
+	await t.frames(1)
+	t.check(o.visible and is_equal_approx(o.light_energy, 2.0), "powered light turns on with its circuit")

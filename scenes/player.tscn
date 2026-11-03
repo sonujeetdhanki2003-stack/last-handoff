@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_fjrip"]
+[ext_resource type="PackedScene" path="res://assets/characters/explorer/Explorer.gltf" id="2_smehm"]
+[ext_resource type="AnimationLibrary" path="res://assets/characters/ual_animations.res" id="3_ur7pv"]
+[ext_resource type="Script" path="res://scripts/player/player_animator.gd" id="4_y4r1p"]
+[ext_resource type="Script" path="res://scripts/player/camera_rig.gd" id="5_d2wvv"]
+[ext_resource type="Script" path="res://scripts/player/flashlight.gd" id="6_3v2ag"]
+[ext_resource type="AudioStream" path="res://audio/sfx/footstep.wav" id="7_jej6c"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_f1ej7"]
+radius = 0.33
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_oprun"]
+radius = 0.22
+
+[node name="Player" type="CharacterBody3D" unique_id=1683208624]
+collision_layer = 2
+collision_mask = 9
+floor_snap_length = 0.3
+script = ExtResource("1_fjrip")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1721128156]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_f1ej7")
+
+[node name="Model" type="Node3D" parent="." unique_id=751668100 instance=ExtResource("2_smehm")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Model" unique_id=698547795]
+libraries/ = ExtResource("3_ur7pv")
+
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=357197668]
+root_node = NodePath("../Model")
+anim_player = NodePath("../Model/AnimationPlayer")
+script = ExtResource("4_y4r1p")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=847834424]
+script = ExtResource("5_d2wvv")
+target_path = NodePath("..")
+
+[node name="Yaw" type="Node3D" parent="CameraRig" unique_id=283235012]
+
+[node name="Pitch" type="Node3D" parent="CameraRig/Yaw" unique_id=1161001318]
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig/Yaw/Pitch" unique_id=1949453635]
+shape = SubResource("SphereShape3D_oprun")
+spring_length = 2.8
+margin = 0.12
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Yaw/Pitch/SpringArm3D" unique_id=296185670]
+current = true
+far = 120.0
+
+[node name="Flashlight" type="Node3D" parent="." unique_id=1705320353]
+script = ExtResource("6_3v2ag")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="Flashlight" unique_id=941969898]
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 9.0
+light_volumetric_fog_energy = 1.5
+light_cull_mask = 1048573
+shadow_enabled = true
+shadow_blur = 1.5
+spot_range = 24.0
+spot_attenuation = 0.85
+spot_angle = 26.0
+spot_angle_attenuation = 0.9
+
+[node name="BounceFill" type="OmniLight3D" parent="Flashlight/SpotLight3D" unique_id=1419501152]
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 0.35
+light_cull_mask = 2
+omni_range = 2.2
+
+[node name="Footsteps" type="AudioStreamPlayer3D" parent="." unique_id=934434962]
+stream = ExtResource("7_jej6c")
+bus = &"SFX"

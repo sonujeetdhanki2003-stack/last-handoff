@@ -1,0 +1,28 @@
+# Godot 4
+.godot/
+*.import.tmp
+/export/
+/build/
+*.tmp
+
+# Builds and packages
+*.exe
+*.pck
+*.zip
+*.apk
+*.aab
+*.x86_64
+
+# Signing secrets: never commit these
+*.jks
+*.keystore
+keystore.properties
+local.properties
+*.p12
+*.pem
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

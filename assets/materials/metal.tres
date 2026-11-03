@@ -1,0 +1,21 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/ph/rusty_painted_metal_diff.jpg" id="1_f1jac"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/rusty_painted_metal_ao.jpg" id="2_awf3b"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/rusty_painted_metal_nor.jpg" id="3_yx2lj"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/rusty_painted_metal_rough.jpg" id="4_4tc5r"]
+
+[resource]
+albedo_color = Color(0.62, 0.66, 0.62, 1)
+albedo_texture = ExtResource("1_f1jac")
+metallic = 0.5
+roughness_texture = ExtResource("4_4tc5r")
+normal_enabled = true
+normal_texture = ExtResource("3_yx2lj")
+ao_enabled = true
+ao_light_affect = 0.3
+ao_texture = ExtResource("2_awf3b")
+uv1_scale = Vector3(0.9, 0.9, 0.9)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

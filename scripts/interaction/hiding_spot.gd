@@ -1,0 +1,139 @@
+class_name HidingSpot
+extends Interactable
+## A locker or the space under a cot. Interact to climb in, Interact again to get
+## out. While hidden the Keeper can't see you, unless it watched you go in.
+
+@export var kind := "locker"            ## "locker" | "cot"
+@export var view_offset := Vector3(0, 1.55, -0.12)   ## local camera position inside
+@export var exit_offset := Vector3(0, 0.05, 0.75)    ## local point you step out to
+
+var occupant: Player = null
+var view: Camera3D
+var _door: Node3D
+var _audio: AudioStreamPlayer3D
+
+
+func _ready() -> void:
+	solid = kind == "locker"
+	prompt = "Hide in the locker" if kind == "locker" else "Hide under the cot"
+	add_to_group("hiding_spots")
+	super._ready()
+	if kind == "locker":
+		_build_locker()
+	else:
+		var cs := CollisionShape3D.new()
+		var bs := BoxShape3D.new()
+		bs.size = Vector3(2.1, 0.6, 1.1)
+		cs.shape = bs
+		cs.position.y = 0.3
+		add_child(cs)
+	view = Camera3D.new()
+	view.name = "View"
+	view.position = view_offset
+	view.fov = 62.0
+	view.rotation.x = 0.0 if kind == "locker" else deg_to_rad(4.0)
+	add_child(view)
+	_audio = AudioStreamPlayer3D.new()
+	_audio.bus = &"SFX"
+	_audio.stream = load("res://audio/sfx/locker.wav")
+	_audio.position.y = 1.0
+	add_child(_audio)
+
+
+func _build_locker() -> void:
+	var steel: Material = ArtMats.local("green_metal", Color(0.55, 0.62, 0.6))
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.05, 0.05, 0.05)
+	var w := 0.62
+	var dpt := 0.55
+	var h := 1.95
+	_box(self, Vector3(w, h, 0.03), Vector3(0, h / 2, -dpt / 2), steel)          # back
+	_box(self, Vector3(0.03, h, dpt), Vector3(-w / 2, h / 2, 0), steel)           # sides
+	_box(self, Vector3(0.03, h, dpt), Vector3(w / 2, h / 2, 0), steel)
+	_box(self, Vector3(w, 0.03, dpt), Vector3(0, h, 0), steel)                    # top
+	_box(self, Vector3(w, 0.06, dpt), Vector3(0, 0.03, 0), steel)                 # floor
+	_door = Node3D.new()
+	_door.position = Vector3(-w / 2, 0, dpt / 2)
+	add_child(_door)
+	_box(_door, Vector3(w, h - 0.04, 0.025), Vector3(w / 2, h / 2, 0), steel)
+	for k in 5:  # vent slits you look out through
+		_box(_door, Vector3(w * 0.6, 0.018, 0.03), Vector3(w / 2, 1.42 + k * 0.045, 0.0), dark)
+	_box(_door, Vector3(0.03, 0.14, 0.04), Vector3(w - 0.07, 1.05, 0.02), dark)   # handle
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(w, h, dpt)
+	cs.shape = bs
+	cs.position = Vector3(0, h / 2, 0)
+	add_child(cs)
+
+
+func _box(parent: Node3D, size: Vector3, pos: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	mi.mesh = bm
+	mi.position = pos
+	mi.material_override = mat
+	parent.add_child(mi)
+
+
+func get_prompt(_a: Node) -> String:
+	return prompt
+
+
+func can_interact(a: Node) -> bool:
+	return occupant == null and a is Player and not (a as Player).dead
+
+
+func get_refusal(_a: Node) -> String:
+	return "Occupied"
+
+
+func interact(actor: Node) -> void:
+	var p := actor as Player
+	if p == null or occupant != null:
+		return
+	for k in get_tree().get_nodes_in_group("keeper"):
+		k.call("on_player_hiding", self)
+	occupant = p
+	p.enter_hiding(self)
+	view.current = true
+	_swing(true)
+	Events.noise.emit(global_position, 2.5, "locker")
+	Events.toast.emit("Hiding. Press E to come out.")
+	super.interact(actor)
+
+
+func leave(p: Player) -> void:
+	if occupant != p:
+		return
+	occupant = null
+	_swing(true)
+	p.exit_hiding(outside_point())
+
+
+func force_out(p: Player) -> void:
+	if occupant == p:
+		occupant = null
+		_swing(true)
+		p.hidden_in = null
+		p.collider.disabled = false
+		p.model.visible = true
+		p.global_position = outside_point()
+		p.cam.camera.current = true
+
+
+func outside_point() -> Vector3:
+	return global_transform * exit_offset
+
+
+func _swing(_open: bool) -> void:
+	if _audio:
+		_audio.stream = Sfx.stream("res://audio/sfx2/locker_close.ogg" if occupant != null else "res://audio/sfx2/locker_open.ogg") if kind == "locker" else Sfx.stream("res://audio/foley/cloth_2.ogg")
+	if _audio and _audio.stream:
+		_audio.play()
+	if _door == null:
+		return
+	var t := create_tween()
+	t.tween_property(_door, "rotation:y", -1.2, 0.18)
+	t.tween_property(_door, "rotation:y", 0.0, 0.25)

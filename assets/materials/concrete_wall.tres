@@ -1,0 +1,35 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/facility_surface.gdshader" id="1_1cyrv"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/dirty_concrete_diff.jpg" id="2_ch0lw"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/dirty_concrete_ao.jpg" id="3_h0pd0"]
+[ext_resource type="Texture2D" path="res://assets/textures/grime_tile.png" id="4_1hxmk"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/dirty_concrete_nor.jpg" id="5_be5by"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/dirty_concrete_rough.jpg" id="6_gir63"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_1cyrv")
+shader_parameter/albedo_tex = ExtResource("2_ch0lw")
+shader_parameter/normal_tex = ExtResource("5_be5by")
+shader_parameter/rough_tex = ExtResource("6_gir63")
+shader_parameter/ao_tex = ExtResource("3_h0pd0")
+shader_parameter/grime_tex = ExtResource("4_1hxmk")
+shader_parameter/tint = Color(0.78, 0.76, 0.72, 1)
+shader_parameter/scale = 0.3
+shader_parameter/normal_strength = null
+shader_parameter/rough_mul = null
+shader_parameter/rough_add = null
+shader_parameter/metallic = null
+shader_parameter/ao_strength = null
+shader_parameter/floor_y = null
+shader_parameter/dirt_height = null
+shader_parameter/dirt_strength = 0.6
+shader_parameter/dirt_color = null
+shader_parameter/streak_strength = 0.5
+shader_parameter/mottle_strength = null
+shader_parameter/wet = null
+shader_parameter/band_y = null
+shader_parameter/lower_color = null
+shader_parameter/upper_color = null
+shader_parameter/paint_mix = null

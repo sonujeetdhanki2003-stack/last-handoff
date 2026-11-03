@@ -1,0 +1,21 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_grate_rusty_diff.jpg" id="1_5hn5m"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_grate_rusty_ao.jpg" id="2_240bo"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_grate_rusty_nor.jpg" id="3_do0p4"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/metal_grate_rusty_rough.jpg" id="4_hba8n"]
+
+[resource]
+albedo_color = Color(0.7, 0.7, 0.68, 1)
+albedo_texture = ExtResource("1_5hn5m")
+metallic = 0.6
+roughness_texture = ExtResource("4_hba8n")
+normal_enabled = true
+normal_texture = ExtResource("3_do0p4")
+ao_enabled = true
+ao_light_affect = 0.3
+ao_texture = ExtResource("2_240bo")
+uv1_scale = Vector3(0.6, 0.6, 0.6)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

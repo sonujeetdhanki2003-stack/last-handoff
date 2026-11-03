@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/ph/worn_planks_diff.jpg" id="1_hkfh6"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/worn_planks_ao.jpg" id="2_8dinx"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/worn_planks_nor.jpg" id="3_tuomg"]
+[ext_resource type="Texture2D" path="res://assets/textures/ph/worn_planks_rough.jpg" id="4_trvj4"]
+
+[resource]
+albedo_color = Color(0.75, 0.68, 0.6, 1)
+albedo_texture = ExtResource("1_hkfh6")
+roughness_texture = ExtResource("4_trvj4")
+normal_enabled = true
+normal_texture = ExtResource("3_tuomg")
+ao_enabled = true
+ao_light_affect = 0.3
+ao_texture = ExtResource("2_8dinx")
+uv1_scale = Vector3(0.9, 0.9, 0.9)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5
